@@ -1,3 +1,4 @@
+import { SegmentedControl } from '@kobalte/core/segmented-control';
 import { useForm } from '@sparkstone/solid-validation';
 import { For, createSignal } from 'solid-js';
 
@@ -7,66 +8,50 @@ const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const plans = ['Hobby', 'Studio', 'Agency'];
 
 /**
- * submit() called from an inline-arrow onClick, which is the shape that never
- * fires under jsdom in the test suite. Every step reports what it did, so a
- * failure here says which half broke.
+ * A control that is not a form field at all: the group is registered with
+ * data-name and checked by submit(), which is called from a click handler
+ * rather than a form's submit event.
  */
 export default function ImperativeSubmitDemo() {
-  const [chosen, setChosen] = createSignal<string | null>(null);
-  const [log, setLog] = createSignal<string[]>([]);
-  const note = (line: string) => setLog(lines => [...lines, line]);
-
+  const [plan, setPlan] = createSignal('');
   const { validate, submit, errors, isSubmitting, isSubmitted } = useForm<Fields>();
 
-  const planChosen = () => !chosen() && 'Choose a plan to continue';
+  const planChosen = () => !plan() && 'Choose a plan to continue';
 
   return (
     <div>
       <p>
         <small>
-          Press Continue with no plan chosen and it should refuse. Choose one and it should say
-          Continuing for 400ms, then Done. The log records every step.
+          Press Continue with nothing chosen and it refuses. Pick a plan and it runs for 400ms.
         </small>
       </p>
 
       <fieldset ref={validate(() => [planChosen])} data-name='plan'>
         <legend>Plan</legend>
-        <For each={plans}>
-          {name => (
-            <button
-              type='button'
-              aria-pressed={chosen() === name}
-              onClick={() => {
-                setChosen(name);
-                note(`chose ${name}`);
-              }}>
-              {name}
-            </button>
-          )}
-        </For>
+        <SegmentedControl class='segmented' value={plan()} onChange={setPlan}>
+          <SegmentedControl.Indicator class='segmented-indicator' />
+          <For each={plans}>
+            {option => (
+              <SegmentedControl.Item value={option} class='segmented-item'>
+                <SegmentedControl.ItemInput />
+                <SegmentedControl.ItemLabel>{option}</SegmentedControl.ItemLabel>
+              </SegmentedControl.Item>
+            )}
+          </For>
+        </SegmentedControl>
       </fieldset>
       <small class='docs-error'>{errors.plan}</small>
 
       <footer>
         <button
           type='button'
+          class='btn btn-primary'
           disabled={isSubmitting()}
-          onClick={() => {
-            note('Continue clicked');
-            submit(async () => {
-              note('callback started');
-              await wait(400);
-              note('callback finished');
-            }).then(ok => note(ok ? 'submitted' : 'refused: nothing was submitted'));
-          }}>
+          onClick={() => submit(() => wait(400))}>
           {isSubmitting() ? 'Continuing' : 'Continue'}
         </button>
-        {isSubmitted() && <ins>Done</ins>}
+        {isSubmitted() && <ins>Subscribed to {plan()}</ins>}
       </footer>
-
-      <ol>
-        <For each={log()}>{line => <li>{line}</li>}</For>
-      </ol>
     </div>
   );
 }

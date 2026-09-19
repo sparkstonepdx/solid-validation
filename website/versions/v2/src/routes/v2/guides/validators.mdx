@@ -1,4 +1,6 @@
 import { Title } from '@solidjs/meta';
+import AsyncValidatorDemo from '../../../components/demos/AsyncValidatorDemo';
+import CrossFieldDemo from '../../../components/demos/CrossFieldDemo';
 
 <Title>Writing validators - solid-validation</Title>
 
@@ -27,6 +29,8 @@ Validators run in array order and stop at the first failure. Put the cheap check
 Native constraints are checked before any of your validators. An empty `required` field never reaches your code, so you do not need to handle the empty case yourself.
 
 ## Async validators
+
+<AsyncValidatorDemo />
 
 A validator may return a promise. It is awaited before the next one runs, so a slow check never races a fast one.
 
@@ -64,3 +68,5 @@ const planChosen = () => !plan() && 'Choose a plan to continue';
 ```
 
 See [Outside a form](/v1/guides/outside-forms/).
+
+<CrossFieldDemo />
