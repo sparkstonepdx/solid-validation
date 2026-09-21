@@ -72,8 +72,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       '@sparkstone/solid-validation':
-        specifier: workspace:^
-        version: link:../../..
+        specifier: ^1.6.1
+        version: 1.6.1(solid-js@1.9.15)
       astro:
         specifier: ^5.1.0
         version: 5.18.2(@types/node@24.13.5)(lightningcss@1.33.0)(rollup@4.63.3)(sass@1.104.1)(typescript@7.0.2)(yaml@2.9.1)
@@ -1886,6 +1886,11 @@ packages:
   '@sparkstone/css@https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@43cdfe5':
     resolution: {integrity: sha512-G8eZzWkf3PwSWXeMISHDiChvdkfrY5hOlrWzaLAEpBZtsw849JTsIGCjj5ja+8hEez0H27HgelnrirSqiemrdg==, tarball: https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@43cdfe5}
     version: 2.0.0
+
+  '@sparkstone/solid-validation@1.6.1':
+    resolution: {integrity: sha512-5LJJjFYFC1GN9U6fk0L7IK3oLMNA/wNjaL5KI8DeeKQDRdWvpShTRsjWFKaQMOor7DLhIaJhosaKLqG+u8+iWQ==}
+    peerDependencies:
+      solid-js: ^1.9.4
 
   '@swc/helpers@0.5.23':
     resolution: {integrity: sha512-5lSsMOTXURePglDfvuAQUqkGek9Hg2kksOYay2m0+XR++b2NWYL/4sWyuvVBIs8oKnJaxkdi9whaL/sqN13afw==}
@@ -5583,6 +5588,10 @@ snapshots:
   '@sparkstone/css@2.0.0': {}
 
   '@sparkstone/css@https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@43cdfe5': {}
+
+  '@sparkstone/solid-validation@1.6.1(solid-js@1.9.15)':
+    dependencies:
+      solid-js: 1.9.15
 
   '@swc/helpers@0.5.23':
     dependencies:

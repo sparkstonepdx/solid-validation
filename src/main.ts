@@ -69,10 +69,14 @@ export function useForm<ErrorFields extends Object>({ errorClass = '' } = {}) {
     (ref: Element) => {
       queueMicrotask(() => {
         let name = ref.name ?? ref.dataset.name;
-        const accessorValue = accessor();
-        const validators = Array.isArray(accessorValue) ? accessorValue : [];
         let config;
-        fields[name] = config = { element: ref, validators };
+        fields[name] = config = {
+          element: ref,
+          get validators() {
+            const accessorValue = accessor();
+            return Array.isArray(accessorValue) ? accessorValue : [];
+          },
+        };
         ref.onblur = () => {
           setIsSubmitted(false);
           return checkValid(config, setErrors, errorClass)();
@@ -133,10 +137,10 @@ export function useForm<ErrorFields extends Object>({ errorClass = '' } = {}) {
       for (const name in callbackResult) {
         if (!(name in fields)) continue;
         fields[name]!.element.setAttribute('aria-invalid', 'true');
-        setErrors(draft => {
-          draft[name] = callbackResult[name];
-        });
       }
+      setErrors(draft => {
+        Object.assign(draft, callbackResult);
+      });
     } else {
       clearErrors();
       setIsSubmitted(true);
