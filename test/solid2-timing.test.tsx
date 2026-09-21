@@ -318,7 +318,9 @@ describe('submission signals', () => {
       const { formSubmit, validate, isSubmitting, isSubmitted } = useForm<Fields>();
       createEffect(
         () => [isSubmitting(), isSubmitted()] as [boolean, boolean],
-        pair => seen.push(pair),
+        pair => {
+          seen.push(pair);
+        },
       );
       return (
         <form ref={formSubmit(() => pending.promise)} data-testid='form'>
@@ -346,7 +348,9 @@ describe('submission signals', () => {
       const { formSubmit, validate, isSubmitting } = useForm<Fields>();
       createEffect(
         () => isSubmitting(),
-        value => seen.push(value),
+        value => {
+          seen.push(value);
+        },
       );
       return (
         <form ref={formSubmit(() => {})} data-testid='form'>

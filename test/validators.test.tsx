@@ -1,5 +1,6 @@
 import { render, screen } from '@solidjs/testing-library';
 import { describe, expect, it, vi } from 'vitest';
+import { createSignal } from 'solid-js';
 import { useForm, type Validator } from '../src/main';
 import { asyncValidator, blur, registered, typeInto, waitFor } from './helpers';
 
@@ -142,5 +143,63 @@ describe('native constraints', () => {
 
     await waitFor(() => expect(screen.getByTestId('error')).toHaveTextContent('Custom message'));
     expect(custom).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('validator accessor', () => {
+  // The accessor exists so the array can depend on reactive state. These pin
+  // down when it is read: if only at registration, a condition inside it is
+  // frozen at mount and flipping the signal changes nothing.
+  function Conditional(props: { on: () => boolean }) {
+    const { validate, errors } = useForm<Fields>();
+    const alwaysFails: Validator<HTMLInputElement> = () => 'Conditional rule failed';
+    return (
+      <>
+        <input
+          type='text'
+          name='field'
+          ref={validate(() => [props.on() && alwaysFails])}
+          data-testid='field'
+        />
+        <span data-testid='error'>{errors.field}</span>
+      </>
+    );
+  }
+
+  it('applies a rule that is switched on after the field mounts', async () => {
+    const [on, setOn] = createSignal(false);
+    render(() => <Conditional on={on} />);
+    await registered();
+
+    await blur(screen.getByTestId('field'));
+    expect(screen.getByTestId('error')).toBeEmptyDOMElement();
+
+    // Signal writes are batched in Solid 2 as well, so let this one flush
+    // before the blur reads it.
+    setOn(true);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await blur(screen.getByTestId('field'));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('error')).toHaveTextContent('Conditional rule failed'),
+    );
+  });
+
+  it('stops applying a rule that is switched off after the field mounts', async () => {
+    const [on, setOn] = createSignal(true);
+    render(() => <Conditional on={on} />);
+    await registered();
+
+    await blur(screen.getByTestId('field'));
+    await waitFor(() =>
+      expect(screen.getByTestId('error')).toHaveTextContent('Conditional rule failed'),
+    );
+
+    setOn(false);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await typeInto(screen.getByTestId('field') as HTMLInputElement, 'x');
+    await blur(screen.getByTestId('field'));
+
+    await waitFor(() => expect(screen.getByTestId('error')).toBeEmptyDOMElement());
   });
 });
