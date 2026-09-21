@@ -283,14 +283,16 @@ describe('field names that stress the proxy', () => {
   // Divergence 2: `constructor` is passed straight through to the target, so the
   // write is silently dropped. The field is still marked invalid in the DOM, so
   // the failure mode is an invalid input with no reachable message.
-  it('never stores an error under "constructor"', async () => {
+  // Solid 1.9.4 stored this key, 1.9.15 dropped it, and Solid 2 stores it again
+  // as an ordinary key. Pinned here so the next change is noticed.
+  it('stores an error under "constructor" like any other key', async () => {
     const errors = nameProbe('constructor');
     await registered();
 
     await blur(screen.getByTestId('field'));
 
-    expect(typeof errors().constructor).toBe('function');
-    expect(Object.keys(errors())).toHaveLength(0);
+    expect(typeof errors().constructor).toBe('string');
+    expect(Object.keys(errors())).toContain('constructor');
     expect(screen.getByTestId('field')).toHaveAttribute('aria-invalid', 'true');
   });
 

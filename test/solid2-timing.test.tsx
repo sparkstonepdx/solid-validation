@@ -1,5 +1,5 @@
 import { render, screen } from '@solidjs/testing-library';
-import { Show, createEffect, createSignal } from 'solid-js';
+import { Show, createEffect, createSignal, flush } from 'solid-js';
 import { describe, expect, it, vi } from 'vitest';
 import { useForm, type Validator } from '../src/main';
 import {
@@ -85,6 +85,7 @@ describe('registration deferral', () => {
 
     const first = screen.getByTestId('toggle');
     setVisible(false);
+    flush();
     setVisible(true);
     await registered();
 
@@ -158,7 +159,7 @@ describe('ownership and disposal', () => {
     input.name = 'loose';
     input.required = true;
     document.body.append(input);
-    validate(input);
+    validate()(input);
     await registered();
 
     await submit(callback);
