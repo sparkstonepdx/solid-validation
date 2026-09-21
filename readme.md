@@ -2,6 +2,11 @@
 
 A lightweight and flexible validation library for Solid.js. It provides a simple API to validate form inputs, handle submission state, and manage error messages. It also supports validation outside of forms and inputs.
 
+Full documentation, with live demos: https://sparkstonepdx.github.io/solid-validation/
+
+> **Solid 1?** Install 1.x: `npm install @sparkstone/solid-validation@1`.
+> 2.x requires Solid 2. The [v1 docs](https://sparkstonepdx.github.io/solid-validation/v1/) are still published.
+
 ## Installation
 
 ```sh
@@ -32,7 +37,6 @@ pnpm add @sparkstone/solid-validation
     - [`errors`](#errors)
     - [`isSubmitting`](#issubmitting)
     - [`isSubmitted`](#issubmitted)
-    - [`validateRef`](#validateref)
     - [`validateField`](#validatefield)
     - [`getFieldValue`](#getfieldvalue)
 
@@ -68,8 +72,8 @@ function MyForm() {
   }
 
   return (
-    <form use:formSubmit={onSubmit}>
-      <input type='text' name='username' placeholder='Enter username' required use:validate />
+    <form ref={formSubmit(onSubmit)}>
+      <input type='text' name='username' placeholder='Enter username' required ref={validate()} />
       <span>{errors.username}</span>
 
       <input
@@ -77,7 +81,7 @@ function MyForm() {
         name='message'
         placeholder='Enter message'
         required
-        use:validate={[min5Characters]}
+        ref={validate(() => [min5Characters])}
       />
       <span>{errors.message}</span>
 
@@ -98,10 +102,10 @@ function MyForm() {
 You can validate any element, not just form inputs:
 
 ```tsx
-<div use:validate={[myCustomValidator]} data-name='customField'></div>
+<div ref={validate(() => [myCustomValidator])} data-name='customField'></div>
 ```
 
-- When using `use:validate` on non-input elements, you **must** supply a `data-name` attribute for error tracking.
+- When using `ref={validate()}` on non-input elements, you **must** supply a `data-name` attribute for error tracking.
 - Validation can be triggered manually using the `submit()` function, even without a form.
 - On validation failure, the library will automatically scroll the invalid element into view and focus it if possible.
 
@@ -118,7 +122,7 @@ function MyComponent() {
 
   return (
     <>
-      <div use:validate={[myCustomValidator]} data-name='customField' />
+      <div ref={validate(() => [myCustomValidator])} data-name='customField' />
       <span>{errors.customField}</span>
       <button onClick={handleClick}>Validate</button>
     </>
@@ -128,18 +132,18 @@ function MyComponent() {
 
 ### Passing Validation to Child Components
 
-`use:validate` is a Solid.js directive and cannot be passed as a prop. Use `validateRef` instead — it returns a `ref`-compatible function that registers the element with the parent form's validation context.
+`validate` returns an ordinary ref callback, so it can be passed down as a prop like any other value.
 
-Pass `validateRef` down as a prop and call it in the child with any validators:
+Pass `validate` down as a prop and call it in the child with any validators:
 
 ```tsx
 // ParentForm.tsx
 function ParentForm() {
-  const { formSubmit, validateRef, errors } = useForm();
+  const { formSubmit, validate, errors } = useForm();
 
   return (
-    <form use:formSubmit={onSubmit}>
-      <UsernameField validateRef={validateRef} />
+    <form ref={formSubmit(onSubmit)}>
+      <UsernameField validate={validate} />
       <span>{errors.username}</span>
       <button type='submit'>Submit</button>
     </form>
@@ -152,7 +156,7 @@ function ParentForm() {
 import { useForm } from '@sparkstone/solid-validation';
 
 interface UsernameFieldProps {
-  validateRef: ReturnType<typeof useForm>['validateRef'];
+  validate: ReturnType<typeof useForm>['validate'];
 }
 
 function UsernameField(props: UsernameFieldProps) {
@@ -161,13 +165,13 @@ function UsernameField(props: UsernameFieldProps) {
       type='text'
       name='username'
       required
-      ref={props.validateRef(minLength)}
+      ref={props.validate(() => [minLength])}
     />
   );
 }
 ```
 
-The child component owns its own validators — the parent just passes `validateRef` down without needing to know what rules each field applies.
+The child component owns its own validators — the parent just passes `validate` down without needing to know what rules each field applies.
 
 ## API
 
@@ -183,23 +187,27 @@ const { formSubmit, validate } = useForm({ errorClass: 'input-error' });
 
 ##### `validate`
 
-`validate(ref: HTMLElement, validators?: Validator[])`
+`validate(accessor?: () => Validator[]): (ref: HTMLElement) => void`
 
-Registers an element for validation. Can be used as a directive on both form inputs and other HTML elements. Validation runs on `blur`; errors are cleared reactively on `input` once a field has been marked invalid.
+Returns a ref callback that registers an element for validation, on form inputs and on other elements alike. Validation runs on `blur` and on submit, and an error clears when the field is typed into.
 
 ```tsx
-<input use:validate={[minLength, isEmail]} name='email' />
+<input ref={validate(() => [minLength(3), isEmail])} name='email' />
+
+// native constraints only
+<input ref={validate()} name='username' required />
 ```
 
-Falsy values are allowed in the validators array, enabling conditional validation:
+The array is read once, when the field registers, so a condition inside it is evaluated at mount. For a rule that should switch on and off while the form is open, put the condition inside the validator, where it is read on every check:
 
 ```tsx
-<input use:validate={[isRequired, requiresConfirmation && mustMatch]} name='password' />
+const mustMatch: Validator<HTMLInputElement> = el =>
+  needsMatch() && el.value !== getFieldValue('password') && 'Passwords do not match';
 ```
 
 ##### `formSubmit`
 
-`formSubmit(ref: HTMLFormElement, callback: OnFormSubmit)`
+`formSubmit(callback?: OnFormSubmit): (ref: HTMLFormElement) => void`
 
 Handles form submission. Runs all registered validations, focuses and scrolls to the first failing field, and calls the callback only if all fields pass. Automatically adds `novalidate` to the form element and clears errors on form reset.
 
@@ -219,9 +227,11 @@ If the callback returns nothing (or `void`), all errors are cleared and `isSubmi
 
 ##### `submit`
 
-`submit(callback: (payload?: Payload) => Promise<void | ErrorFields>, payload?: Payload): Promise<void>`
+`submit(callback: (payload?: Payload) => Promise<void | ErrorFields>, payload?: Payload): Promise<boolean>`
 
 Triggers validation manually without a form element. Useful for validating arbitrary elements or building custom submission flows. Behaves the same as `formSubmit` — clears errors and sets `isSubmitted` on success, or merges returned errors on failure.
+
+Resolves to `true` when the submission went through, and `false` when validation refused or the callback returned errors. A refused submit is an ordinary outcome, not an exception, so it never rejects.
 
 ##### `errors`
 
@@ -240,20 +250,6 @@ Reactive store of current validation error messages, keyed by field name (from `
 `isSubmitted: () => boolean`
 
 `true` after a successful submission (callback returned `void`). Reset to `false` on the next input event.
-
-##### `validateRef`
-
-`validateRef(...validators: Validator[]): (ref: HTMLElement) => void`
-
-Returns a `ref`-compatible function that registers an element with the form's validation context. Use this in place of `use:validate` when passing validation into child components as a prop.
-
-```tsx
-// with validators
-<input ref={validateRef(minLength, isEmail)} name='email' />
-
-// without validators (relies on native constraint validation only)
-<input ref={validateRef()} name='username' required />
-```
 
 ##### `validateField`
 

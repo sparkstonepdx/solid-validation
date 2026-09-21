@@ -23,7 +23,7 @@ Return a string to fail. Return anything falsy to pass, which includes `undefine
 Validators run in array order and stop at the first failure. Put the cheap checks first:
 
 ```tsx
-<input use:validate={[minLength(3), isUsernameAvailable]} />
+<input ref={validate(() => [minLength(3), isUsernameAvailable])} />
 ```
 
 Native constraints are checked before any of your validators. An empty `required` field never reaches your code, so you do not need to handle the empty case yourself.
@@ -49,7 +49,7 @@ There is no debounce built in. Since validators only run on blur and on submit, 
 Falsy entries in the array are skipped, so a rule can be switched off inline without building the array conditionally:
 
 ```tsx
-<input use:validate={[isRequired, needsConfirmation() && mustMatchPassword]} />
+<input ref={validate(() => [isRequired, needsConfirmation() && mustMatchPassword])} />
 ```
 
 ## The message reaches the element too
@@ -64,7 +64,7 @@ A validator receives whatever element it was attached to. On a `div`, `el.value`
 const [plan, setPlan] = createSignal<string | null>(null);
 const planChosen = () => !plan() && 'Choose a plan to continue';
 
-<div use:validate={[planChosen]} data-name='plan' />;
+<div ref={validate(() => [planChosen])} data-name='plan' />;
 ```
 
 See [Outside a form](/v1/guides/outside-forms/).

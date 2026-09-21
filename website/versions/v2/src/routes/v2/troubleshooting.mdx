@@ -4,24 +4,17 @@ import { Title } from '@solidjs/meta';
 
 # Troubleshooting
 
-## use:validate does nothing
+## Click handlers do nothing
 
-Directives are compiled away by `babel-preset-solid`, so they need Solid's JSX transform. They work in any project built with `vite-plugin-solid`, SolidStart, or Astro with `@astrojs/solid-js`. They do not work in a project running only the TypeScript JSX transform.
+If `onClick` and other event handlers never fire, but a form still submits, your Solid packages are from different releases. Solid 2 ships `solid-js`, `@solidjs/web`, `@solidjs/vite-plugin` and `@solidjs/router` together, and mixing releases breaks event delegation: the compiler and the runtime disagree on the property a handler is stored under, so the handler is attached and never read.
 
-If the form renders but no field is ever checked, this is almost always why.
+Keep all four on the same release. Their `peerDependencies` say which one each expects.
 
-## TypeScript says use:validate does not exist
+## Errors appear a moment after the event
 
-The directive types come from the package itself, so importing `useForm` is what registers them. If the error persists, your `tsconfig.json` is not pointing JSX at Solid:
+Solid 2 batches store writes, so an error lands on the next flush rather than in the same tick as the blur that caused it. Anything reading `errors.email` in JSX updates when the write settles, so rendering is unaffected.
 
-```json
-{
-  "compilerOptions": {
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js"
-  }
-}
-```
+It matters only when reading the store imperatively straight after an event, and in tests. Assert with `waitFor` rather than immediately after the action.
 
 ## Errors land under the wrong key
 

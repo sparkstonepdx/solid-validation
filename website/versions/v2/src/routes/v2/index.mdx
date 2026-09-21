@@ -7,16 +7,16 @@ import SubmitDemo from '../../components/demos/SubmitDemo';
 
 <SubmitDemo />
 
-That form is running the real library. Two directives, one store:
+That form is running the real library. Two ref factories, one store:
 
 ```tsx
 const { formSubmit, validate, errors, isSubmitting } = useForm();
 
-<form use:formSubmit={onSubmit}>
-  <input type='email' name='email' required use:validate />
+<form ref={formSubmit(onSubmit)}>
+  <input type='email' name='email' required ref={validate()} />
   <span>{errors.email}</span>
 
-  <input name='handle' required use:validate={[minLength(3), noSpaces]} />
+  <input name='handle' required ref={validate(() => [minLength(3), noSpaces])} />
   <span>{errors.handle}</span>
 </form>
 ```
@@ -25,7 +25,7 @@ const { formSubmit, validate, errors, isSubmitting } = useForm();
 
 `required`, `type="email"`, `minlength` and `pattern` already work in every browser. What browsers do not give you is the error message in a place you can style, position and translate. `useForm` runs the native check, falls through to your own validators when the native check passes, and writes whatever failed into a reactive store keyed by field name.
 
-There is no schema to declare and no field registry to keep in sync. A field joins the form by being marked with `use:validate`, and it leaves when it unmounts.
+There is no schema to declare and no field registry to keep in sync. A field joins the form by being marked with `ref={validate()}`, and it leaves when it unmounts.
 
 ## What it does not do
 

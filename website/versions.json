@@ -1,20 +1,19 @@
 {
   "root": "/solid-validation/",
-  "current": "v1",
+  "current": "v2",
   "versions": [
     {
       "id": "v1",
       "label": "v1 (Solid 1)",
       "library": "1.x",
       "path": "/solid-validation/v1/",
-      "source": "workspace"
+      "source": "npm"
     },
     {
       "id": "v2",
       "label": "v2 (Solid 2)",
       "library": "2.x",
       "path": "/solid-validation/v2/",
-      "prerelease": true,
       "source": "workspace"
     }
   ]

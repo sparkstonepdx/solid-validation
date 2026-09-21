@@ -6,7 +6,7 @@ import { Title } from '@solidjs/meta';
 
 Not every required choice is an input. A plan picker, a map marker, a signature pad and a file dropzone all have a valid and an invalid state, and none of them are form controls.
 
-`use:validate` works on any element. Give it a `data-name` so its errors have a key, and call `submit()` yourself instead of relying on a form:
+`ref={validate()}` works on any element. Give it a `data-name` so its errors have a key, and call `submit()` yourself instead of relying on a form:
 
 ```tsx
 function PlanPicker() {
@@ -17,7 +17,7 @@ function PlanPicker() {
 
   return (
     <>
-      <div use:validate={[planChosen]} data-name='plan'>
+      <div ref={validate(() => [planChosen])} data-name='plan'>
         <For each={plans}>
           {name => <button onClick={() => setPlan(name)}>{name}</button>}
         </For>
@@ -56,7 +56,7 @@ function choose(name: string) {
 
 ## Mixing both
 
-Registered elements all live in the same form, whether they are inputs or not. A `<form use:formSubmit>` containing a `div use:validate` validates both on submit, and a single `errors` store covers them.
+Registered elements all live in the same form, whether they are inputs or not. A `<form ref={formSubmit(onSubmit)}>` containing a `div ref={validate()}` validates both on submit, and a single `errors` store covers them.
 
 ## Unmounted elements
 

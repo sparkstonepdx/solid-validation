@@ -60,11 +60,11 @@ That is the whole API for a normal form. Here it is running:
 
 ## What each piece does
 
-`useForm()` returns everything the form needs. Destructuring it is required, not stylistic: `use:validate` only compiles when `validate` exists as a variable in scope.
+`useForm()` returns everything the form needs. Destructuring it is required, not stylistic: `ref={validate()}` only compiles when `validate` exists as a variable in scope.
 
-`use:validate` puts a field in the form. With no value it checks the browser's own rules, which is where `required` and `type="email"` are handled. With an array it runs your validators after those pass.
+`ref={validate()}` puts a field in the form. With no value it checks the browser's own rules, which is where `required` and `type="email"` are handled. With an array it runs your validators after those pass.
 
-`use:formSubmit` takes over the submit event. Your callback runs only once every field passes, and receives the form element.
+`formSubmit(onSubmit)` returns a ref that takes over the form's submit event. Your callback runs only once every field passes, and receives the form element.
 
 `errors` is a store keyed by each field's `name`. Render `errors.email` wherever the message should appear.
 
@@ -97,7 +97,7 @@ const { validate } = useForm({ errorClass: 'is-invalid' });
 
 ## Next
 
-Server errors, async checks, and fields outside a form are all in the guides. If `use:validate` reports a type error or seems to do nothing, see [Troubleshooting](/v1/troubleshooting).
+Server errors, async checks, and fields outside a form are all in the guides. If `ref={validate()}` reports a type error or seems to do nothing, see [Troubleshooting](/v1/troubleshooting).
 
 Calling `submit()` yourself, without a form element:
 

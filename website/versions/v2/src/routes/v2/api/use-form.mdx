@@ -26,14 +26,14 @@ A class name toggled on any element that fails validation, alongside `aria-inval
 ## validate
 
 ```ts
-validate(ref: HTMLElement, accessor?: () => Validator[] | Falsy): void
+validate(accessor?: () => Validator[] | Falsy): (ref: HTMLElement) => void
 ```
 
-Registers an element, used as a directive.
+Returns a ref callback that registers the element it is attached to. The accessor returns the validators to run after the browser's own constraints pass; with no accessor, only the native constraints apply.
 
 ```tsx
-<input name='email' required use:validate />
-<input name='handle' use:validate={[minLength(3)]} />
+<input name='email' required ref={validate()} />
+<input name='handle' ref={validate(() => [minLength(3)])} />
 ```
 
 Registration is deferred to a microtask, so a field is not queryable in the same synchronous tick it renders in. Attaches `blur` and `input` handlers by assigning `onblur` and `oninput`, which replaces any handler already assigned that way on the same element.
@@ -45,13 +45,13 @@ The store key comes from `name`, falling back to `data-name`.
 ## formSubmit
 
 ```ts
-formSubmit(ref: HTMLFormElement, accessor: () => OnFormSubmit): void
+formSubmit(callback?: OnFormSubmit): (ref: HTMLFormElement) => void
 ```
 
-Takes over a form's submit event, used as a directive.
+Returns a ref callback that takes over the form's submit event. The callback is passed directly rather than through an accessor: it closes over its own signals and reads them when it runs.
 
 ```tsx
-<form use:formSubmit={onSubmit}>
+<form ref={formSubmit(onSubmit)}>
 ```
 
 On attach it sets `novalidate` on the form. On submit it calls `preventDefault()` and runs the same sequence as `submit`, passing the form element to your callback. On reset it clears every error.
@@ -120,16 +120,16 @@ isSubmitted: () => boolean
 
 ---
 
-## validateRef
+## validate
 
 ```ts
-validateRef(...validators: Validator[]): (ref: HTMLElement) => void
+validate(() => [...validators: Validator[]]): (ref: HTMLElement) => void
 ```
 
-Returns a ref-compatible function that registers an element. The value form of `use:validate`, for fields inside child components. Validators are passed as arguments rather than as an array.
+Returns a ref-compatible function that registers an element. The value form of `ref={validate()}`, for fields inside child components. Validators are passed as arguments rather than as an array.
 
 ```tsx
-<input name='email' required ref={validateRef(isCorporateAddress)} />
+<input name='email' required ref={validate(() => [isCorporateAddress])} />
 ```
 
 See [Child components](/v1/guides/child-components/).

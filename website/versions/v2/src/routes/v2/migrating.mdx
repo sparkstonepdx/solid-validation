@@ -37,11 +37,19 @@ directive compiler used to insert that wrapper for you.
 +ref={validate(() => [minLength(3), noSpaces])}
 ```
 
-The wrapper is what makes a conditional rule work, because the array is read
-when the field is checked rather than when it mounts:
+The directive compiler used to insert that wrapper for you. The array is read
+once, when the field registers, so a condition inside it is evaluated at mount:
 
 ```tsx
 <input ref={validate(() => [isRequired, needsMatch() && mustMatch])} />
+```
+
+To change a field's rules later, put the condition inside the validator, where
+it is read every time the field is checked:
+
+```ts
+const mustMatchWhenNeeded: Validator<HTMLInputElement> = el =>
+  needsMatch() && el.value !== getFieldValue('password') && 'Passwords do not match';
 ```
 
 `formSubmit` takes the callback directly. Your callback closes over its own

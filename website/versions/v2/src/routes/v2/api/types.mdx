@@ -25,7 +25,7 @@ const hasSelection: Validator<HTMLSelectElement> = el =>
 `Falsy` is part of the union so a conditional entry type-checks without a cast:
 
 ```tsx
-<input use:validate={[required, needsMatch() && mustMatch]} />
+<input ref={validate(() => [required, needsMatch() && mustMatch])} />
 ```
 
 ## Falsy
@@ -44,26 +44,6 @@ type ValidatorResponse = MaybePromise<string | Falsy>;
 
 A message, nothing, or a promise of either.
 
-## JSX.Directives
-
-The package augments Solid's directive interface:
-
-```ts
-declare module 'solid-js' {
-  namespace JSX {
-    interface Directives {
-      formSubmit: (callback: HTMLFormElement) => any;
-      validate: boolean | Validator<any>[];
-    }
-  }
-}
-```
-
-The augmentation is applied by importing anything from the package. Two things follow from these signatures:
-
-`validate` accepts `boolean`, which is what makes bare `use:validate` with no value valid. Passing `true` explicitly is the same as passing nothing.
-
-`validate` is typed as `Validator<any>[]`, so the array does not narrow to your element. Annotate each validator with its own `Validator<HTMLInputElement>` to keep the element typed.
 
 ## Typing errors
 
