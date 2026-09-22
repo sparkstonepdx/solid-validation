@@ -1,0 +1,120 @@
+import { Title } from '@solidjs/meta';
+
+<Title>Migrating from v1 - solid-validation</Title>
+
+# Migrating from v1
+
+v2 targets Solid 2. Two things drive every change below: Solid 2 removed `use:`
+directives, and it batches store writes.
+
+## Directives become ref factories
+
+`use:validate` and `use:formSubmit` are gone, because Solid 2 has no directives.
+Each is now a function you call, which returns a ref callback.
+
+```diff
+-<form use:formSubmit={onSubmit}>
+-  <input name='email' required use:validate />
+-  <input name='handle' use:validate={[minLength(3)]} />
+-</form>
++<form ref={formSubmit(onSubmit)}>
++  <input name='email' required ref={validate()} />
++  <input name='handle' ref={validate(() => [minLength(3)])} />
++</form>
+```
+
+Destructuring `useForm()` is no longer required. The directive compiler needed
+the names in scope; a ref factory is an ordinary value, so `form.validate(...)`
+works as well.
+
+## validators take an accessor
+
+`validate` takes a function returning the array, not the array itself. The
+directive compiler used to insert that wrapper for you.
+
+```diff
+-use:validate={[minLength(3), noSpaces]}
++ref={validate(() => [minLength(3), noSpaces])}
+```
+
+The directive compiler used to insert that wrapper for you. The array is read
+once, when the field registers, so a condition inside it is evaluated at mount:
+
+```tsx
+<input ref={validate(() => [isRequired, needsMatch() && mustMatch])} />
+```
+
+To change a field's rules later, put the condition inside the validator, where
+it is read every time the field is checked:
+
+```ts
+const mustMatchWhenNeeded: Validator<HTMLInputElement> = el =>
+  needsMatch() && el.value !== getFieldValue('password') && 'Passwords do not match';
+```
+
+`formSubmit` takes the callback directly. Your callback closes over its own
+signals and reads them when it runs, so there is nothing to defer.
+
+## validateRef is gone
+
+It existed because directives could not cross a component boundary. Ref
+factories can, so `validate` covers both cases and `validateRef` is removed.
+
+```diff
+-<input ref={props.validateRef(minLength(3), noSpaces)} />
++<input ref={props.validate(() => [minLength(3), noSpaces])} />
+```
+
+Note the arguments become one array inside an accessor.
+
+## Errors arrive a tick later
+
+Solid 2 batches store writes. In v1 a blur on an empty required field put the
+message in `errors` in the same tick as the event. It now lands on the next
+flush.
+
+Nothing changes for rendering, since anything reading `errors.email` in JSX
+updates when the write settles. It matters if you read the store imperatively
+straight after an event:
+
+```ts
+field.dispatchEvent(new FocusEvent('blur'));
+errors.email; // still undefined here
+```
+
+`validateField` is unaffected. It awaits its own check and reports the result
+directly rather than reading the store back.
+
+In tests, assert with `waitFor` rather than immediately after the action.
+
+## Cleared fields leave no key
+
+Clearing an error now deletes its key instead of setting it to `undefined`, so
+`Object.keys(errors)` lists only fields that are currently failing. Code that
+counts errors or iterates the store sees the difference; code that reads
+`errors.email` does not.
+
+## Peer dependencies
+
+`@solidjs/web` joins `solid-js` as a peer, since Solid 2 puts the JSX runtime in
+a separate package.
+
+```json
+"peerDependencies": {
+  "solid-js": "^2.0.0",
+  "@solidjs/web": "^2.0.0"
+}
+```
+
+## submit reports its outcome
+
+`submit()` returned `void` in v1, so a caller could not tell whether the
+callback ran. It now resolves to a boolean: `true` when the submission went
+through, `false` when validation refused or the callback returned errors.
+
+```diff
+-await submit(save);
++if (await submit(save)) navigate('/done');
+```
+
+`formSubmit` is unaffected, since the form element has nowhere to report to.

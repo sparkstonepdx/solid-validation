@@ -24,9 +24,9 @@ describe('key lifecycle', () => {
   function Keys(props: { onSubmit?: () => any }) {
     const { formSubmit, validate, errors } = useForm<Fields>();
     return (
-      <form use:formSubmit={props.onSubmit ?? (() => {})} data-testid='form'>
-        <input name='a' required use:validate data-testid='a' />
-        <input name='b' required use:validate data-testid='b' />
+      <form ref={formSubmit(props.onSubmit ?? (() => {}))} data-testid='form'>
+        <input name='a' required ref={validate()} data-testid='a' />
+        <input name='b' required ref={validate()} data-testid='b' />
         <span data-testid='keys'>{Object.keys(errors).join(',')}</span>
         <span data-testid='count'>{createMemo(() => Object.keys(errors).length)()}</span>
         <span data-testid='has-a'>{'a' in errors ? 'yes' : 'no'}</span>
@@ -50,7 +50,7 @@ describe('key lifecycle', () => {
     render(() => <Keys />);
     await registered();
 
-    blur(screen.getByTestId('a'));
+    await blur(screen.getByTestId('a'));
 
     expect(text(screen.getByTestId('keys'))).toBe('a');
     expect(text(screen.getByTestId('has-a'))).toBe('yes');
@@ -65,10 +65,10 @@ describe('key lifecycle', () => {
     await registered();
 
     const a = screen.getByTestId('a') as HTMLInputElement;
-    blur(a);
+    await blur(a);
     expect(text(screen.getByTestId('keys'))).toBe('a');
 
-    typeInto(a, 'ada');
+    await typeInto(a, 'ada');
 
     expect(text(screen.getByTestId('keys'))).toBe('');
     expect(text(screen.getByTestId('has-a'))).toBe('no');
@@ -79,11 +79,11 @@ describe('key lifecycle', () => {
     render(() => <Keys />);
     await registered();
 
-    blur(screen.getByTestId('a'));
-    blur(screen.getByTestId('b'));
+    await blur(screen.getByTestId('a'));
+    await blur(screen.getByTestId('b'));
     expect(text(screen.getByTestId('keys'))).toBe('a,b');
 
-    typeInto(screen.getByTestId('a') as HTMLInputElement, 'ada');
+    await typeInto(screen.getByTestId('a') as HTMLInputElement, 'ada');
 
     expect(text(screen.getByTestId('keys'))).toBe('b');
   });
@@ -94,10 +94,10 @@ describe('key lifecycle', () => {
     render(() => <Keys />);
     await registered();
 
-    blur(screen.getByTestId('a'));
-    blur(screen.getByTestId('b'));
+    await blur(screen.getByTestId('a'));
+    await blur(screen.getByTestId('b'));
 
-    press(screen.getByTestId('reset'));
+    await press(screen.getByTestId('reset'));
 
     expect(text(screen.getByTestId('keys'))).toBe('');
     expect(text(screen.getByTestId('count'))).toBe('0');
@@ -107,12 +107,12 @@ describe('key lifecycle', () => {
     render(() => <Keys />);
     await registered();
 
-    blur(screen.getByTestId('a'));
+    await blur(screen.getByTestId('a'));
     expect(text(screen.getByTestId('keys'))).toBe('a');
 
-    typeInto(screen.getByTestId('a') as HTMLInputElement, 'ada');
-    typeInto(screen.getByTestId('b') as HTMLInputElement, 'bee');
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await typeInto(screen.getByTestId('a') as HTMLInputElement, 'ada');
+    await typeInto(screen.getByTestId('b') as HTMLInputElement, 'bee');
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     await waitFor(() => expect(text(screen.getByTestId('keys'))).toBe(''));
   });
@@ -126,8 +126,8 @@ describe('reactivity of keys that do not exist yet', () => {
     render(() => {
       const { formSubmit, validate, errors } = useForm<Fields>();
       return (
-        <form use:formSubmit={() => ({ form: 'Service unavailable' })} data-testid='form'>
-          <input name='a' use:validate data-testid='a' />
+        <form ref={formSubmit(() => ({ form: 'Service unavailable' }))} data-testid='form'>
+          <input name='a' ref={validate()} data-testid='a' />
           <span data-testid='error-form'>{errors.form}</span>
         </form>
       );
@@ -136,7 +136,7 @@ describe('reactivity of keys that do not exist yet', () => {
 
     expect(screen.getByTestId('error-form')).toBeEmptyDOMElement();
 
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     await waitFor(() =>
       expect(screen.getByTestId('error-form')).toHaveTextContent('Service unavailable'),
@@ -148,8 +148,8 @@ describe('reactivity of keys that do not exist yet', () => {
       const { validate, errors } = useForm<Fields>();
       return (
         <>
-          <input name='a' required use:validate data-testid='a' />
-          <input name='b' required use:validate data-testid='b' />
+          <input name='a' required ref={validate()} data-testid='a' />
+          <input name='b' required ref={validate()} data-testid='b' />
           <ul data-testid='list'>
             <For each={Object.keys(errors)}>{key => <li>{key}</li>}</For>
           </ul>
@@ -160,10 +160,10 @@ describe('reactivity of keys that do not exist yet', () => {
 
     expect(screen.getByTestId('list').children).toHaveLength(0);
 
-    blur(screen.getByTestId('a'));
+    await blur(screen.getByTestId('a'));
     expect(screen.getByTestId('list').children).toHaveLength(1);
 
-    blur(screen.getByTestId('b'));
+    await blur(screen.getByTestId('b'));
     expect(screen.getByTestId('list').children).toHaveLength(2);
   });
 });
@@ -174,19 +174,19 @@ describe('write coalescing', () => {
 
     render(() => {
       const { validate, errors } = useForm<Fields>();
-      createEffect(() => {
-        errors.field;
-        runs();
-      });
-      return <input name='field' use:validate={[() => 'Same message']} data-testid='field' />;
+      createEffect(
+          () => errors.field,
+          () => runs(),
+        );
+      return <input name='field' ref={validate(() => [() => 'Same message'])} data-testid='field' />;
     });
     await registered();
     await waitFor(() => expect(runs).toHaveBeenCalledTimes(1));
 
-    blur(screen.getByTestId('field'));
+    await blur(screen.getByTestId('field'));
     await waitFor(() => expect(runs).toHaveBeenCalledTimes(2));
 
-    blur(screen.getByTestId('field'));
+    await blur(screen.getByTestId('field'));
     await waitFor(() => expect(screen.getByTestId('field')).toHaveAttribute('aria-invalid', 'true'));
 
     expect(runs).toHaveBeenCalledTimes(2);
@@ -198,20 +198,20 @@ describe('write coalescing', () => {
 
     render(() => {
       const { validate, errors } = useForm<Fields>();
-      createEffect(() => {
-        errors.field;
-        runs();
-      });
-      return <input name='field' use:validate={[() => message]} data-testid='field' />;
+      createEffect(
+          () => errors.field,
+          () => runs(),
+        );
+      return <input name='field' ref={validate(() => [() => message])} data-testid='field' />;
     });
     await registered();
     await waitFor(() => expect(runs).toHaveBeenCalledTimes(1));
 
-    blur(screen.getByTestId('field'));
+    await blur(screen.getByTestId('field'));
     await waitFor(() => expect(runs).toHaveBeenCalledTimes(2));
 
     message = 'Second';
-    blur(screen.getByTestId('field'));
+    await blur(screen.getByTestId('field'));
     await waitFor(() => expect(runs).toHaveBeenCalledTimes(3));
   });
 });
@@ -229,7 +229,7 @@ describe('field names that stress the proxy', () => {
       const form = useForm<Fields>();
       errors = form.errors as Record<string, any>;
       const { validate } = form;
-      return <input name={fieldName} required use:validate data-testid='field' />;
+      return <input name={fieldName} required ref={validate()} data-testid='field' />;
     });
     return () => errors;
   }
@@ -242,7 +242,7 @@ describe('field names that stress the proxy', () => {
         const { validate, errors } = useForm<Fields>();
         return (
           <>
-            <input name={fieldName} required use:validate data-testid='field' />
+            <input name={fieldName} required ref={validate()} data-testid='field' />
             <span data-testid='error'>{errors[fieldName]}</span>
           </>
         );
@@ -250,10 +250,10 @@ describe('field names that stress the proxy', () => {
       await registered();
 
       const field = screen.getByTestId('field') as HTMLInputElement;
-      blur(field);
+      await blur(field);
       expect(screen.getByTestId('error')).not.toBeEmptyDOMElement();
 
-      typeInto(field, 'value');
+      await typeInto(field, 'value');
       expect(screen.getByTestId('error')).toBeEmptyDOMElement();
     });
   }
@@ -271,11 +271,11 @@ describe('field names that stress the proxy', () => {
 
       expect(typeof errors()[fieldName]).toBe('function');
 
-      blur(screen.getByTestId('field'));
+      await blur(screen.getByTestId('field'));
       expect(typeof errors()[fieldName]).toBe('string');
       expect(Object.keys(errors())).toContain(fieldName);
 
-      typeInto(screen.getByTestId('field') as HTMLInputElement, 'value');
+      await typeInto(screen.getByTestId('field') as HTMLInputElement, 'value');
       expect(Object.keys(errors())).not.toContain(fieldName);
     });
   }
@@ -283,14 +283,16 @@ describe('field names that stress the proxy', () => {
   // Divergence 2: `constructor` is passed straight through to the target, so the
   // write is silently dropped. The field is still marked invalid in the DOM, so
   // the failure mode is an invalid input with no reachable message.
-  it('never stores an error under "constructor"', async () => {
+  // Solid 1.9.4 stored this key, 1.9.15 dropped it, and Solid 2 stores it again
+  // as an ordinary key. Pinned here so the next change is noticed.
+  it('stores an error under "constructor" like any other key', async () => {
     const errors = nameProbe('constructor');
     await registered();
 
-    blur(screen.getByTestId('field'));
+    await blur(screen.getByTestId('field'));
 
-    expect(typeof errors().constructor).toBe('function');
-    expect(Object.keys(errors())).toHaveLength(0);
+    expect(typeof errors().constructor).toBe('string');
+    expect(Object.keys(errors())).toContain('constructor');
     expect(screen.getByTestId('field')).toHaveAttribute('aria-invalid', 'true');
   });
 
@@ -299,7 +301,7 @@ describe('field names that stress the proxy', () => {
       const { validate, errors } = useForm<Fields>();
       return (
         <>
-          <input name='user.email' required use:validate data-testid='field' />
+          <input name='user.email' required ref={validate()} data-testid='field' />
           <span data-testid='keys'>{Object.keys(errors).join(',')}</span>
           <span data-testid='nested'>{(errors as any).user ? 'nested' : 'flat'}</span>
         </>
@@ -307,7 +309,7 @@ describe('field names that stress the proxy', () => {
     });
     await registered();
 
-    blur(screen.getByTestId('field'));
+    await blur(screen.getByTestId('field'));
 
     expect(text(screen.getByTestId('keys'))).toBe('user.email');
     expect(text(screen.getByTestId('nested'))).toBe('flat');
@@ -318,14 +320,14 @@ describe('field names that stress the proxy', () => {
       const { validate, errors } = useForm<Fields>();
       return (
         <>
-          <input required use:validate data-name='ignored' data-testid='field' />
+          <input required ref={validate()} data-name='ignored' data-testid='field' />
           <span data-testid='keys'>{Object.keys(errors).join('|')}</span>
         </>
       );
     });
     await registered();
 
-    blur(screen.getByTestId('field'));
+    await blur(screen.getByTestId('field'));
 
     // `element.name` is '' rather than undefined, so the `??` fallback to
     // data-name never fires for a real input.
@@ -339,16 +341,16 @@ describe('server errors versus field errors', () => {
     render(() => {
       const { formSubmit, validate, errors } = useForm<Fields>();
       return (
-        <form use:formSubmit={() => ({ email: 'Already registered' })} data-testid='form'>
-          <input type='email' name='email' required use:validate data-testid='email' />
+        <form ref={formSubmit(() => ({ email: 'Already registered' }))} data-testid='form'>
+          <input type='email' name='email' required ref={validate()} data-testid='email' />
           <span data-testid='error'>{errors.email}</span>
         </form>
       );
     });
     await registered();
 
-    typeInto(screen.getByTestId('email') as HTMLInputElement, 'ada@example.com');
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await typeInto(screen.getByTestId('email') as HTMLInputElement, 'ada@example.com');
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     await waitFor(() =>
       expect(screen.getByTestId('error')).toHaveTextContent('Already registered'),
@@ -359,8 +361,8 @@ describe('server errors versus field errors', () => {
     render(() => {
       const { formSubmit, validate, errors, isSubmitted } = useForm<Fields>();
       return (
-        <form use:formSubmit={() => ({})} data-testid='form'>
-          <input name='a' use:validate data-testid='a' />
+        <form ref={formSubmit(() => ({}))} data-testid='form'>
+          <input name='a' ref={validate()} data-testid='a' />
           <span data-testid='submitted'>{isSubmitted() ? 'yes' : 'no'}</span>
           <span data-testid='keys'>{Object.keys(errors).join(',')}</span>
         </form>
@@ -368,7 +370,7 @@ describe('server errors versus field errors', () => {
     });
     await registered();
 
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     await waitFor(() => expect(text(screen.getByTestId('submitted'))).toBe('no'));
     expect(text(screen.getByTestId('keys'))).toBe('');

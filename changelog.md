@@ -5,6 +5,38 @@ All notable changes to `@sparkstone/solid-validation` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0]
+
+Targets Solid 2. **Projects on Solid 1 should stay on 1.x**: this release will
+not run there, and 1.6.1 remains supported for Solid 1. The v1 documentation
+stays published alongside the v2 docs.
+
+The [migration guide](https://sparkstonepdx.github.io/solid-validation/v2/migrating/)
+covers each change below with before and after code.
+
+### Changed
+- **Directives are replaced by ref factories.** Solid 2 has no `use:`
+  directives. `use:validate` becomes `ref={validate()}` and
+  `use:formSubmit={onSubmit}` becomes `ref={formSubmit(onSubmit)}`.
+- **`validate` takes an accessor** returning the validator array:
+  `ref={validate(() => [minLength(3)])}`.
+- **`submit()` returns `Promise<boolean>`**: `true` when the submission went
+  through, `false` when validation refused or the callback returned errors. It
+  returned `void` before, so a caller could not tell whether it ran.
+- **Cleared errors delete their key** instead of setting it to `undefined`, so
+  `Object.keys(errors)` lists only fields that are currently failing.
+- **Errors arrive on the next flush.** Solid 2 batches store writes, so an error
+  is no longer in the store in the same tick as the event that caused it.
+  Rendering is unaffected; imperative reads and tests should wait.
+- Peer dependencies are now `solid-js` and `@solidjs/web`, both `^2.0.0-rc.9`.
+
+### Removed
+- **`validateRef`.** It existed because a directive could not be passed as a
+  prop. `validate` returns an ordinary ref callback, so it covers that case:
+  `ref={props.validate(() => [...])}`.
+
+---
+
 ## [1.6.1]
 
 ### Changed

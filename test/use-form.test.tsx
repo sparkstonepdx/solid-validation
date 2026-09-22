@@ -26,11 +26,11 @@ function BasicForm(props: {
   props.ready?.(api);
 
   return (
-    <form use:formSubmit={props.onSubmit ?? (() => {})} data-testid='form'>
-      <input type='text' name='username' required use:validate data-testid='username' />
+    <form ref={formSubmit(props.onSubmit ?? (() => {}))} data-testid='form'>
+      <input type='text' name='username' required ref={validate()} data-testid='username' />
       <span data-testid='error-username'>{errors.username}</span>
 
-      <input type='text' name='message' use:validate={[minLength(5)]} data-testid='message' />
+      <input type='text' name='message' ref={validate(() => [minLength(5)])} data-testid='message' />
       <span data-testid='error-message'>{errors.message}</span>
 
       <span data-testid='error-form'>{errors.formError}</span>
@@ -71,7 +71,7 @@ describe('blur validation', () => {
     render(() => <BasicForm />);
     await registered();
 
-    blur(screen.getByTestId('username'));
+    await blur(screen.getByTestId('username'));
 
     expect(screen.getByTestId('error-username')).not.toBeEmptyDOMElement();
     expect(screen.getByTestId('username')).toHaveAttribute('aria-invalid', 'true');
@@ -82,8 +82,8 @@ describe('blur validation', () => {
     await registered();
 
     const message = screen.getByTestId('message') as HTMLInputElement;
-    typeInto(message, 'abc');
-    blur(message);
+    await typeInto(message, 'abc');
+    await blur(message);
 
     await waitFor(() =>
       expect(screen.getByTestId('error-message')).toHaveTextContent('Must be at least 5 characters'),
@@ -95,8 +95,8 @@ describe('blur validation', () => {
     await registered();
 
     const message = screen.getByTestId('message') as HTMLInputElement;
-    typeInto(message, 'long enough');
-    blur(message);
+    await typeInto(message, 'long enough');
+    await blur(message);
 
     await waitFor(() => expect(message.validationMessage).toBe(''));
     expect(screen.getByTestId('error-message')).toBeEmptyDOMElement();
@@ -110,10 +110,10 @@ describe('clearing errors', () => {
     await registered();
 
     const username = screen.getByTestId('username') as HTMLInputElement;
-    blur(username);
+    await blur(username);
     expect(screen.getByTestId('error-username')).not.toBeEmptyDOMElement();
 
-    typeInto(username, 'ada');
+    await typeInto(username, 'ada');
 
     expect(screen.getByTestId('error-username')).toBeEmptyDOMElement();
     expect(username).toHaveAttribute('aria-invalid', 'false');
@@ -126,14 +126,14 @@ describe('clearing errors', () => {
     const username = screen.getByTestId('username') as HTMLInputElement;
     const message = screen.getByTestId('message') as HTMLInputElement;
 
-    blur(username);
-    typeInto(message, 'abc');
-    blur(message);
+    await blur(username);
+    await typeInto(message, 'abc');
+    await blur(message);
     await waitFor(() => expect(message.validationMessage).toBe('Must be at least 5 characters'));
     expect(username).toHaveAttribute('aria-invalid', 'true');
     expect(username).toHaveClass('is-invalid');
 
-    press(screen.getByTestId('reset'));
+    await press(screen.getByTestId('reset'));
 
     expect(username).toHaveAttribute('aria-invalid', 'false');
     expect(username).not.toHaveClass('is-invalid');
@@ -150,12 +150,12 @@ describe('clearing errors', () => {
     await registered();
 
     const username = screen.getByTestId('username') as HTMLInputElement;
-    blur(username);
+    await blur(username);
     expect(username).toHaveAttribute('aria-invalid', 'true');
 
-    typeInto(username, 'ada');
-    typeInto(screen.getByTestId('message') as HTMLInputElement, 'long enough');
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await typeInto(username, 'ada');
+    await typeInto(screen.getByTestId('message') as HTMLInputElement, 'long enough');
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     await waitFor(() => expect(screen.getByTestId('submitted')).toHaveTextContent('yes'));
     expect(username).toHaveAttribute('aria-invalid', 'false');
@@ -166,10 +166,10 @@ describe('clearing errors', () => {
     render(() => <BasicForm />);
     await registered();
 
-    blur(screen.getByTestId('username'));
+    await blur(screen.getByTestId('username'));
     expect(screen.getByTestId('error-username')).not.toBeEmptyDOMElement();
 
-    press(screen.getByTestId('reset'));
+    await press(screen.getByTestId('reset'));
 
     expect(screen.getByTestId('error-username')).toBeEmptyDOMElement();
   });
@@ -181,10 +181,10 @@ describe('errorClass', () => {
     await registered();
 
     const username = screen.getByTestId('username') as HTMLInputElement;
-    blur(username);
+    await blur(username);
     expect(username).toHaveClass('is-invalid');
 
-    typeInto(username, 'ada');
+    await typeInto(username, 'ada');
     expect(username).not.toHaveClass('is-invalid');
   });
 
@@ -193,7 +193,7 @@ describe('errorClass', () => {
     await registered();
 
     const username = screen.getByTestId('username') as HTMLInputElement;
-    blur(username);
+    await blur(username);
     expect(username.className).toBe('');
   });
 });
@@ -204,7 +204,7 @@ describe('formSubmit', () => {
     render(() => <BasicForm onSubmit={onSubmit} />);
     await registered();
 
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     await waitFor(() => expect(screen.getByTestId('error-username')).not.toBeEmptyDOMElement());
     expect(onSubmit).not.toHaveBeenCalled();
@@ -214,8 +214,8 @@ describe('formSubmit', () => {
     render(() => <BasicForm />);
     await registered();
 
-    typeInto(screen.getByTestId('message') as HTMLInputElement, 'abc');
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await typeInto(screen.getByTestId('message') as HTMLInputElement, 'abc');
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     // username registers first, so it wins the focus.
     await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('username')));
@@ -227,9 +227,9 @@ describe('formSubmit', () => {
     render(() => <BasicForm onSubmit={onSubmit} />);
     await registered();
 
-    typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
-    typeInto(screen.getByTestId('message') as HTMLInputElement, 'long enough');
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
+    await typeInto(screen.getByTestId('message') as HTMLInputElement, 'long enough');
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit.mock.calls[0][0]).toBe(screen.getByTestId('form'));
@@ -240,9 +240,9 @@ describe('formSubmit', () => {
     render(() => <BasicForm onSubmit={() => ({ username: 'Already taken' })} />);
     await registered();
 
-    typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
-    typeInto(screen.getByTestId('message') as HTMLInputElement, 'long enough');
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
+    await typeInto(screen.getByTestId('message') as HTMLInputElement, 'long enough');
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     await waitFor(() =>
       expect(screen.getByTestId('error-username')).toHaveTextContent('Already taken'),
@@ -255,9 +255,9 @@ describe('formSubmit', () => {
     render(() => <BasicForm onSubmit={() => ({ formError: 'Server unavailable' })} />);
     await registered();
 
-    typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
-    typeInto(screen.getByTestId('message') as HTMLInputElement, 'long enough');
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
+    await typeInto(screen.getByTestId('message') as HTMLInputElement, 'long enough');
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     await waitFor(() =>
       expect(screen.getByTestId('error-form')).toHaveTextContent('Server unavailable'),
@@ -269,9 +269,9 @@ describe('formSubmit', () => {
     render(() => <BasicForm onSubmit={() => pending.promise} />);
     await registered();
 
-    typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
-    typeInto(screen.getByTestId('message') as HTMLInputElement, 'long enough');
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
+    await typeInto(screen.getByTestId('message') as HTMLInputElement, 'long enough');
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
 
     await waitFor(() => expect(screen.getByTestId('submit')).toBeDisabled());
 

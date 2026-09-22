@@ -7,6 +7,7 @@ const sections = [
     links: [
       { href: '/v2', label: 'Overview' },
       { href: '/v2/quick-start', label: 'Quick start' },
+      { href: '/v2/migrating', label: 'Migrating from v1' },
     ],
   },
   {

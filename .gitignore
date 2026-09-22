@@ -5,3 +5,6 @@ coverage
 
 # The built site is committed: github pages serves the repo's /docs folder.
 !/docs
+
+# Staging directory for surge.sh docs previews, built in CI.
+surge

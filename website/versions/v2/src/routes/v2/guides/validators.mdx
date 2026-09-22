@@ -1,0 +1,72 @@
+import { Title } from '@solidjs/meta';
+import AsyncValidatorDemo from '../../../components/demos/AsyncValidatorDemo';
+import CrossFieldDemo from '../../../components/demos/CrossFieldDemo';
+
+<Title>Writing validators - solid-validation</Title>
+
+# Writing validators
+
+A validator is a function that takes the element and returns a message when something is wrong:
+
+```ts
+
+const minLength =
+  (min: number): Validator<HTMLInputElement> =>
+  el =>
+    el.value.length < min && `Use at least ${min} characters`;
+```
+
+Return a string to fail. Return anything falsy to pass, which includes `undefined`, `null`, `false`, `0` and `''`. That is why `el.value.length < min && message` works directly: the passing branch is `false`.
+
+## Order matters
+
+Validators run in array order and stop at the first failure. Put the cheap checks first:
+
+```tsx
+<input ref={validate(() => [minLength(3), isUsernameAvailable])} />
+```
+
+Native constraints are checked before any of your validators. An empty `required` field never reaches your code, so you do not need to handle the empty case yourself.
+
+## Async validators
+
+<AsyncValidatorDemo />
+
+A validator may return a promise. It is awaited before the next one runs, so a slow check never races a fast one.
+
+```ts
+const isUsernameAvailable: Validator<HTMLInputElement> = async el => {
+  const { taken } = await api.checkUsername(el.value);
+  return taken ? `${el.value} is already taken` : undefined;
+};
+```
+
+
+There is no debounce built in. Since validators only run on blur and on submit, a field is checked once per visit rather than once per keystroke. If you need to throttle further, do it inside your own validator.
+
+## Conditional validators
+
+Falsy entries in the array are skipped, so a rule can be switched off inline without building the array conditionally:
+
+```tsx
+<input ref={validate(() => [isRequired, needsConfirmation() && mustMatchPassword])} />
+```
+
+## The message reaches the element too
+
+When a validator fails, its message is passed to `element.setCustomValidity()`. The element's own `validationMessage` and `checkValidity()` then agree with what is in `errors`, which matters if anything else in your app reads native validity. The custom validity is cleared at the start of every check, so a stale message never carries forward.
+
+## Validating something other than an input
+
+A validator receives whatever element it was attached to. On a `div`, `el.value` is undefined, so read from wherever your state actually lives:
+
+```tsx
+const [plan, setPlan] = createSignal<string | null>(null);
+const planChosen = () => !plan() && 'Choose a plan to continue';
+
+<div ref={validate(() => [planChosen])} data-name='plan' />;
+```
+
+See [Outside a form](/v1/guides/outside-forms/).
+
+<CrossFieldDemo />

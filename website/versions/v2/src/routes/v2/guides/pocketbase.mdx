@@ -1,0 +1,76 @@
+import { Title } from '@solidjs/meta';
+
+<Title>PocketBase - solid-validation</Title>
+
+# PocketBase
+
+Two helpers ship from a separate entry point, so nothing PocketBase-related reaches your bundle unless you import it:
+
+```ts
+  parsePocketbaseError,
+  prepareFormDataForPocketbase,
+} from '@sparkstone/solid-validation/pocketbase';
+```
+
+## Field errors
+
+PocketBase returns validation failures under `data.data`, keyed by field name. `parsePocketbaseError` flattens that into the shape the submit callback expects, so it can be returned directly:
+
+```tsx
+async function onSubmit(form: HTMLFormElement) {
+  try {
+    await pb.collection('users').create(new FormData(form));
+  } catch (error) {
+    return parsePocketbaseError(error);
+  }
+}
+```
+
+Given a PocketBase response like:
+
+```json
+{
+  "message": "Failed to create record.",
+  "data": {
+    "email": { "code": "validation_invalid_email", "message": "Must be a valid email address." },
+    "password": { "code": "validation_length_out_of_range", "message": "Must be at least 8 characters." }
+  }
+}
+```
+
+you get:
+
+```js
+{
+  form: 'Failed to create record.',
+  email: 'Must be a valid email address.',
+  password: 'Must be at least 8 characters.',
+}
+```
+
+Field names match your input `name` attributes, so each message lands next to its field. The top-level message goes under `form`. Render it wherever your form-level errors go:
+
+```tsx
+<span>{errors.form}</span>
+```
+
+Pass a second argument to use a different key:
+
+```ts
+return parsePocketbaseError(error, 'signupError');
+```
+
+An error with no `data.data` block, such as a network failure, yields only the root key. That is why the root key is always populated: there is always something to show.
+
+## Checkboxes
+
+An unchecked checkbox is omitted from `FormData` entirely. PocketBase treats a missing boolean field as no change rather than as `false`, so unchecking a box does nothing. `prepareFormDataForPocketbase` writes an explicit `"false"` for every unchecked box in the form:
+
+```tsx
+async function onSubmit(form: HTMLFormElement) {
+  const formData = prepareFormDataForPocketbase(new FormData(form), form);
+  await pb.collection('users').update(id, formData);
+}
+```
+
+It mutates and returns the same `FormData` instance, and it only touches `input[type="checkbox"]` elements inside the form you pass it.

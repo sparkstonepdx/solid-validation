@@ -1,6 +1,9 @@
 // The classless build styles bare semantic elements, which is what the docs
 // markup and the demos use. The default export is the class-based build.
 @use '@sparkstone/css/src/classless.scss';
+// Kobalte's parts are styled by their own layer, keyed on its state
+// attributes, so the version switcher needs no hand-written rules.
+@use '@sparkstone/css/src/classless/kobalte.scss';
 
 /*
  * Colour comes from @sparkstone/css via oklch relative syntax: the -lc
@@ -248,15 +251,6 @@
   color: var(--error-color);
 }
 
-.docs-version-placeholder {
-  display: inline-block;
-  padding: 0.4rem 0.7rem;
-  border: var(--border-width) solid oklch(from var(--color) var(--surface-lc-3) h);
-  border-radius: var(--border-radius);
-  font-size: 0.875rem;
-  color: oklch(from var(--color) var(--text-lc-3) h);
-}
-
 /* ---------- responsive ---------- */
 
 @media (max-width: 80rem) {
@@ -301,4 +295,58 @@
   .docs-nav a {
     transition: none;
   }
+}
+
+/* ---------- code highlighting ---------- */
+
+/*
+ * Shiki emits both themes as CSS variables on every token. The light values are
+ * inline; this swaps to the dark set when the framework is in dark mode, so the
+ * code blocks follow the rest of the page instead of being fixed to one theme.
+ */
+/*
+ * Shiki emits both themes as CSS variables on every token. The framework picks
+ * its scheme from prefers-color-scheme and lets [data-color-scheme] override
+ * it, so code blocks follow the same two rules rather than the attribute alone.
+ */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-color-scheme='light']) .shiki,
+  :root:not([data-color-scheme='light']) .shiki span {
+    color: var(--shiki-dark);
+    background-color: var(--shiki-dark-bg);
+  }
+}
+
+[data-color-scheme='dark'] .shiki,
+[data-color-scheme='dark'] .shiki span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
+
+[data-color-scheme='light'] .shiki,
+[data-color-scheme='light'] .shiki span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+
+.shiki {
+  padding: 1rem 1.15rem;
+  border: var(--border-width) solid oklch(from var(--color) var(--surface-lc-3) h);
+  border-radius: var(--border-radius);
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.shiki code {
+  background: none;
+  padding: 0;
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
 }

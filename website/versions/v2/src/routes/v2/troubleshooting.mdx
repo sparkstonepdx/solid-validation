@@ -1,0 +1,21 @@
+import { Title } from '@solidjs/meta';
+
+<Title>Troubleshooting - solid-validation</Title>
+
+# Troubleshooting
+
+## Click handlers do nothing
+
+If `onClick` and other event handlers never fire, but a form still submits, your Solid packages are from different releases. Solid 2 ships `solid-js`, `@solidjs/web`, `@solidjs/vite-plugin` and `@solidjs/router` together, and mixing releases breaks event delegation: the compiler and the runtime disagree on the property a handler is stored under, so the handler is attached and never read.
+
+Keep all four on the same release. Their `peerDependencies` say which one each expects.
+
+## Errors appear a moment after the event
+
+Solid 2 batches store writes, so an error lands on the next flush rather than in the same tick as the blur that caused it. Anything reading `errors.email` in JSX updates when the write settles, so rendering is unaffected.
+
+It matters only when reading the store imperatively straight after an event, and in tests. Assert with `waitFor` rather than immediately after the action.
+
+## Errors land under the wrong key
+
+The store key is the element's `name`, falling back to `data-name`. An `<input>` with neither is registered under an empty string rather than falling through to `data-name`, because `input.name` is `''` and not `undefined`. Give inputs a `name`, and give non-input elements a `data-name`.

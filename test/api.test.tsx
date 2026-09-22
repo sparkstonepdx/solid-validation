@@ -14,7 +14,7 @@ describe('validateField', () => {
       const { validate, errors } = api;
       return (
         <>
-          <input name='username' required use:validate data-testid='username' />
+          <input name='username' required ref={validate()} data-testid='username' />
           <span data-testid='error'>{errors.username}</span>
         </>
       );
@@ -32,12 +32,12 @@ describe('validateField', () => {
     function Form() {
       api = useForm<Fields>();
       const { validate } = api;
-      return <input name='username' required use:validate data-testid='username' />;
+      return <input name='username' required ref={validate()} data-testid='username' />;
     }
     render(() => <Form />);
     await registered();
 
-    typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
+    await typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
     expect(await api.validateField('username')).toBe(true);
   });
 
@@ -59,12 +59,12 @@ describe('getFieldValue', () => {
     function Form() {
       api = useForm<Fields>();
       const { validate } = api;
-      return <input name='username' use:validate data-testid='username' />;
+      return <input name='username' ref={validate()} data-testid='username' />;
     }
     render(() => <Form />);
     await registered();
 
-    typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
+    await typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
     expect(api.getFieldValue('username')).toBe('ada');
   });
 
@@ -80,15 +80,15 @@ describe('getFieldValue', () => {
   });
 });
 
-describe('validateRef', () => {
+describe('validate', () => {
   it('registers a child-owned field through a ref prop', async () => {
-    function EmailField(props: { validateRef: ReturnType<typeof useForm<Fields>>['validateRef'] }) {
+    function EmailField(props: { validate: ReturnType<typeof useForm<Fields>>['validate'] }) {
       return (
         <input
           type='email'
           name='email'
           required
-          ref={props.validateRef(minLength(6))}
+          ref={props.validate(() => [minLength(6)])}
           data-testid='email'
         />
       );
@@ -97,10 +97,10 @@ describe('validateRef', () => {
     const callback = vi.fn();
 
     function Parent() {
-      const { validateRef, errors, submit } = useForm<Fields>();
+      const { validate, errors, submit } = useForm<Fields>();
       return (
         <>
-          <EmailField validateRef={validateRef} />
+          <EmailField validate={validate} />
           <span data-testid='error'>{errors.email}</span>
           <button data-testid='go' onClick={() => submit(callback)}>
             Go
@@ -112,8 +112,8 @@ describe('validateRef', () => {
     render(() => <Parent />);
     await registered();
 
-    typeInto(screen.getByTestId('email') as HTMLInputElement, 'a@b.co');
-    press(screen.getByTestId('go'));
+    await typeInto(screen.getByTestId('email') as HTMLInputElement, 'a@b.co');
+    await press(screen.getByTestId('go'));
 
     await waitFor(() => expect(callback).toHaveBeenCalledTimes(1));
     expect(screen.getByTestId('error')).toBeEmptyDOMElement();
@@ -121,10 +121,10 @@ describe('validateRef', () => {
 
   it('applies the validators passed to it', async () => {
     function Parent() {
-      const { validateRef, errors, submit } = useForm<Fields>();
+      const { validate, errors, submit } = useForm<Fields>();
       return (
         <>
-          <input name='email' ref={validateRef(minLength(6))} data-testid='email' />
+          <input name='email' ref={validate(() => [minLength(6)])} data-testid='email' />
           <span data-testid='error'>{errors.email}</span>
           <button data-testid='go' onClick={() => submit(() => {})}>
             Go
@@ -136,12 +136,47 @@ describe('validateRef', () => {
     render(() => <Parent />);
     await registered();
 
-    typeInto(screen.getByTestId('email') as HTMLInputElement, 'abc');
-    press(screen.getByTestId('go'));
+    await typeInto(screen.getByTestId('email') as HTMLInputElement, 'abc');
+    await press(screen.getByTestId('go'));
 
     await waitFor(() =>
       expect(screen.getByTestId('error')).toHaveTextContent('Must be at least 6 characters'),
     );
+  });
+});
+
+describe('submit result', () => {
+  function Form(props: { ready: (api: ReturnType<typeof useForm<Fields>>) => void }) {
+    const api = useForm<Fields>();
+    props.ready(api);
+    const { validate } = api;
+    return <input name='username' required ref={validate()} data-testid='username' />;
+  }
+
+  it('reports false when validation blocks the submit', async () => {
+    let api!: ReturnType<typeof useForm<Fields>>;
+    render(() => <Form ready={a => (api = a)} />);
+    await registered();
+
+    expect(await api.submit(() => {})).toBe(false);
+  });
+
+  it('reports true when the callback returns nothing', async () => {
+    let api!: ReturnType<typeof useForm<Fields>>;
+    render(() => <Form ready={a => (api = a)} />);
+    await registered();
+
+    await typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
+    expect(await api.submit(() => {})).toBe(true);
+  });
+
+  it('reports false when the callback returns errors', async () => {
+    let api!: ReturnType<typeof useForm<Fields>>;
+    render(() => <Form ready={a => (api = a)} />);
+    await registered();
+
+    await typeInto(screen.getByTestId('username') as HTMLInputElement, 'ada');
+    expect(await api.submit(() => ({ username: 'Already taken' }))).toBe(false);
   });
 });
 
@@ -153,7 +188,7 @@ describe('submit without a form', () => {
       const { validate, errors, submit } = useForm<Fields>();
       return (
         <>
-          <div use:validate={[() => 'Pick at least one']} data-name='customField' />
+          <div ref={validate(() => [() => 'Pick at least one'])} data-name='customField' />
           <span data-testid='error'>{errors.customField}</span>
           <button data-testid='go' onClick={() => submit(callback)}>
             Go
@@ -165,7 +200,7 @@ describe('submit without a form', () => {
     render(() => <Widget />);
     await registered();
 
-    press(screen.getByTestId('go'));
+    await press(screen.getByTestId('go'));
 
     await waitFor(() =>
       expect(screen.getByTestId('error')).toHaveTextContent('Pick at least one'),
@@ -188,7 +223,7 @@ describe('submit without a form', () => {
     render(() => <Widget />);
     await registered();
 
-    press(screen.getByTestId('go'));
+    await press(screen.getByTestId('go'));
 
     await waitFor(() => expect(callback).toHaveBeenCalledWith({ id: 7 }));
   });
@@ -202,7 +237,7 @@ describe('submit without a form', () => {
       return (
         <>
           <Show when={visible()}>
-            <input name='username' required use:validate data-testid='username' />
+            <input name='username' required ref={validate()} data-testid='username' />
           </Show>
           <button data-testid='go' onClick={() => submit(callback)}>
             Go
@@ -215,7 +250,7 @@ describe('submit without a form', () => {
     await registered();
 
     setVisible(false);
-    press(screen.getByTestId('go'));
+    await press(screen.getByTestId('go'));
 
     await waitFor(() => expect(callback).toHaveBeenCalledTimes(1));
   });

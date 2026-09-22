@@ -37,7 +37,7 @@ export default function VersionSwitcher() {
   return (
     <Show
       when={mounted()}
-      fallback={<span class='docs-version-placeholder'>{current().label}</span>}>
+      fallback={<span class='btn btn-ghost'>{current().label}</span>}>
       <Select<Version>
         options={all()}
         optionValue='id'
@@ -48,16 +48,16 @@ export default function VersionSwitcher() {
           window.location.href = next.path;
         }}
         itemComponent={props => (
-          <Select.Item item={props.item}>
+          <Select.Item item={props.item} class='menu-item'>
             <Select.ItemLabel>{props.item.rawValue.label}</Select.ItemLabel>
           </Select.Item>
         )}>
-        <Select.Trigger class='secondary' aria-label='Documentation version'>
+        <Select.Trigger class='btn btn-ghost' aria-label='Documentation version'>
           <Select.Value<Version>>{state => state.selectedOption().label}</Select.Value>
         </Select.Trigger>
         <Select.Portal>
-          <Select.Content class='card'>
-            <Select.Listbox />
+          <Select.Content class='dropdown-content'>
+            <Select.Listbox class='menu' />
           </Select.Content>
         </Select.Portal>
       </Select>

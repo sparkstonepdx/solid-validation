@@ -1,5 +1,5 @@
 import { render, screen } from '@solidjs/testing-library';
-import { Show, createEffect, createSignal } from 'solid-js';
+import { Show, createEffect, createSignal, flush } from 'solid-js';
 import { describe, expect, it, vi } from 'vitest';
 import { useForm, type Validator } from '../src/main';
 import {
@@ -30,7 +30,7 @@ describe('registration deferral', () => {
     render(() => {
       api = useForm<Fields>();
       const { validate } = api;
-      return <input name='a' required use:validate data-testid='a' />;
+      return <input name='a' required ref={validate()} data-testid='a' />;
     });
 
     expect(api.getFieldValue('a')).toBeUndefined();
@@ -40,7 +40,7 @@ describe('registration deferral', () => {
     // One turn is enough: the field is live and a native failure lands
     // synchronously from here.
     expect(api.getFieldValue('a')).toBe('');
-    blur(screen.getByTestId('a'));
+    await blur(screen.getByTestId('a'));
     expect(screen.getByTestId('a')).toHaveAttribute('aria-invalid', 'true');
   });
 
@@ -52,7 +52,7 @@ describe('registration deferral', () => {
       return (
         <>
           <Show when={visible()}>
-            <input name='late' required use:validate data-testid='late' />
+            <input name='late' required ref={validate()} data-testid='late' />
           </Show>
           <span data-testid='error'>{errors.late}</span>
         </>
@@ -63,7 +63,7 @@ describe('registration deferral', () => {
     setVisible(true);
     await registered();
 
-    blur(screen.getByTestId('late'));
+    await blur(screen.getByTestId('late'));
     expect(screen.getByTestId('error')).not.toBeEmptyDOMElement();
   });
 
@@ -75,7 +75,7 @@ describe('registration deferral', () => {
       return (
         <>
           <Show when={visible()}>
-            <input name='toggle' required use:validate data-testid='toggle' />
+            <input name='toggle' required ref={validate()} data-testid='toggle' />
           </Show>
           <span data-testid='error'>{errors.toggle}</span>
         </>
@@ -85,13 +85,14 @@ describe('registration deferral', () => {
 
     const first = screen.getByTestId('toggle');
     setVisible(false);
+    flush();
     setVisible(true);
     await registered();
 
     const second = screen.getByTestId('toggle');
     expect(second).not.toBe(first);
 
-    blur(second);
+    await blur(second);
     expect(second).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByTestId('error')).not.toBeEmptyDOMElement();
   });
@@ -101,8 +102,8 @@ describe('registration deferral', () => {
       const { validate, errors, submit } = useForm<Fields>();
       return (
         <>
-          <input name='dup' required use:validate data-testid='first' />
-          <input name='dup' required use:validate data-testid='second' />
+          <input name='dup' required ref={validate()} data-testid='first' />
+          <input name='dup' required ref={validate()} data-testid='second' />
           <span data-testid='error'>{errors.dup}</span>
           <button data-testid='go' onClick={() => submit(() => {})}>
             Go
@@ -112,7 +113,7 @@ describe('registration deferral', () => {
     });
     await registered();
 
-    press(screen.getByTestId('go'));
+    await press(screen.getByTestId('go'));
 
     // Both write to the same store key, but only the survivor of the registry
     // is checked on submit, and it is the one that gets focused.
@@ -136,14 +137,14 @@ describe('validator depth', () => {
         const { validate, errors } = useForm<Fields>();
         return (
           <>
-            <input name='f' use:validate={pad(depth)} data-testid='f' />
+            <input name='f' ref={validate(() => pad(depth))} data-testid='f' />
             <span data-testid='error'>{errors.f}</span>
           </>
         );
       });
       await registered();
 
-      blur(screen.getByTestId('f'));
+      await blur(screen.getByTestId('f'));
       await waitFor(() => expect(screen.getByTestId('error')).toHaveTextContent('Failed'));
     });
   }
@@ -158,7 +159,7 @@ describe('ownership and disposal', () => {
     input.name = 'loose';
     input.required = true;
     document.body.append(input);
-    validate(input);
+    validate()(input);
     await registered();
 
     await submit(callback);
@@ -180,7 +181,7 @@ describe('ownership and disposal', () => {
       const { validate, errors } = useForm<Fields>();
       return (
         <>
-          <input name='a' required use:validate data-testid='a' />
+          <input name='a' required ref={validate()} data-testid='a' />
           <span>{errors.a}</span>
         </>
       );
@@ -205,7 +206,7 @@ describe('ownership and disposal', () => {
       const { validate, errors, isSubmitted } = api;
       return (
         <>
-          <input name='a' use:validate data-testid='a' />
+          <input name='a' ref={validate()} data-testid='a' />
           <span>{errors.a}</span>
           <span>{isSubmitted() ? 'yes' : 'no'}</span>
         </>
@@ -217,7 +218,7 @@ describe('ownership and disposal', () => {
     unmount();
     pending.resolve();
 
-    await expect(running).resolves.toBeUndefined();
+    await expect(running).resolves.toBe(true);
   });
 });
 
@@ -237,7 +238,7 @@ describe('async ordering', () => {
       const { validate, errors } = useForm<Fields>();
       return (
         <>
-          <input name='f' use:validate={[slow]} data-testid='f' />
+          <input name='f' ref={validate(() => [slow])} data-testid='f' />
           <span data-testid='error'>{errors.f}</span>
         </>
       );
@@ -245,10 +246,10 @@ describe('async ordering', () => {
     await registered();
 
     const field = screen.getByTestId('f') as HTMLInputElement;
-    typeInto(field, 'abc');
-    blur(field);
+    await typeInto(field, 'abc');
+    await blur(field);
 
-    typeInto(field, 'long enough now');
+    await typeInto(field, 'long enough now');
     expect(screen.getByTestId('error')).toBeEmptyDOMElement();
 
     await waitFor(() => expect(screen.getByTestId('error')).toHaveTextContent('Too short'));
@@ -267,7 +268,7 @@ describe('async ordering', () => {
       const { validate, errors } = useForm<Fields>();
       return (
         <>
-          <input name='f' use:validate={[staggered]} data-testid='f' />
+          <input name='f' ref={validate(() => [staggered])} data-testid='f' />
           <span data-testid='error'>{errors.f}</span>
         </>
       );
@@ -275,8 +276,8 @@ describe('async ordering', () => {
     await registered();
 
     const field = screen.getByTestId('f');
-    blur(field);
-    blur(field);
+    await blur(field);
+    await blur(field);
 
     // The second check finishes first, then the first overwrites it. Whichever
     // way a new scheduler orders these, the store must not be left empty.
@@ -292,11 +293,11 @@ describe('async ordering', () => {
       return (
         <input
           name='f'
-          use:validate={[
+          ref={validate(() => [
             () => {
               throw new Error('validator exploded');
             },
-          ]}
+          ])}
           data-testid='f'
         />
       );
@@ -316,16 +317,21 @@ describe('submission signals', () => {
 
     render(() => {
       const { formSubmit, validate, isSubmitting, isSubmitted } = useForm<Fields>();
-      createEffect(() => seen.push([isSubmitting(), isSubmitted()]));
+      createEffect(
+        () => [isSubmitting(), isSubmitted()] as [boolean, boolean],
+        pair => {
+          seen.push(pair);
+        },
+      );
       return (
-        <form use:formSubmit={() => pending.promise} data-testid='form'>
-          <input name='a' use:validate data-testid='a' />
+        <form ref={formSubmit(() => pending.promise)} data-testid='form'>
+          <input name='a' ref={validate()} data-testid='a' />
         </form>
       );
     });
     await registered();
 
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
     await waitFor(() => expect(seen).toContainEqual([true, false]));
 
     pending.resolve();
@@ -341,16 +347,21 @@ describe('submission signals', () => {
 
     render(() => {
       const { formSubmit, validate, isSubmitting } = useForm<Fields>();
-      createEffect(() => seen.push(isSubmitting()));
+      createEffect(
+        () => isSubmitting(),
+        value => {
+          seen.push(value);
+        },
+      );
       return (
-        <form use:formSubmit={() => {}} data-testid='form'>
-          <input name='a' required use:validate data-testid='a' />
+        <form ref={formSubmit(() => {})} data-testid='form'>
+          <input name='a' required ref={validate()} data-testid='a' />
         </form>
       );
     });
     await registered();
 
-    submitForm(screen.getByTestId('form') as HTMLFormElement);
+    await submitForm(screen.getByTestId('form') as HTMLFormElement);
     await waitFor(() => expect(screen.getByTestId('a')).toHaveAttribute('aria-invalid', 'true'));
 
     expect(seen).toEqual([false]);
@@ -366,7 +377,7 @@ describe('submission signals', () => {
     render(() => {
       api = useForm<Fields>();
       const { validate } = api;
-      return <input name='a' use:validate data-testid='a' />;
+      return <input name='a' ref={validate()} data-testid='a' />;
     });
     await registered();
 
@@ -377,6 +388,6 @@ describe('submission signals', () => {
     first.resolve();
     second.resolve();
 
-    await expect(Promise.all([a, b])).resolves.toEqual([undefined, undefined]);
+    await expect(Promise.all([a, b])).resolves.toEqual([true, true]);
   });
 });

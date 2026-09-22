@@ -1,0 +1,52 @@
+import { Title } from '@solidjs/meta';
+
+<Title>Child components - solid-validation</Title>
+
+# Child components
+
+`validate` returns an ordinary ref callback, so it crosses a component boundary like any other value. Pass it down as a prop and let the child decide its own rules.
+
+```tsx
+// Parent
+function ProfileForm() {
+  const { formSubmit, validate, errors } = useForm();
+
+  return (
+    <form ref={formSubmit(onSubmit)}>
+      <HandleField validate={validate} error={errors.handle} />
+      <button type='submit'>Save</button>
+    </form>
+  );
+}
+```
+
+```tsx
+// Child
+type Validate = ReturnType<typeof useForm>['validate'];
+
+function HandleField(props: { validate: Validate; error?: string }) {
+  return <input name='handle' required ref={props.validate(() => [minLength(3), noSpaces])} />;
+}
+```
+
+The parent supplies the registration function and never learns what rules the field applies. Adding a rule to `HandleField` changes nothing in `ProfileForm`.
+
+With no validators, native constraints still apply:
+
+```tsx
+<input name='email' type='email' required ref={props.validate()} />
+```
+
+This is also why v2 has no `validateRef`. In v1, `use:validate` was a directive: compile-time syntax that could not be passed as a prop, so a second, ref-shaped entry point was needed for exactly this case. A ref factory covers both.
+
+## Passing errors down
+
+The `errors` store is a Solid store proxy, so reading `errors.handle` in the parent and passing the result as a prop stays reactive. Passing the whole store down also works if a child needs several keys:
+
+```tsx
+<AddressFields validate={validate} errors={errors} />
+```
+
+## One useForm per form
+
+`useForm` creates an independent store and field registry each time it is called. A child that calls `useForm` itself gets its own form, and its fields are not checked when the parent submits. Call it once at the top of the form and pass `validate` down.
