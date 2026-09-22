@@ -40,7 +40,7 @@ export default function Sidebar(props: { open: boolean; onNavigate: () => void }
     location.pathname.replace(/\/$/, '') === to(href).replace(/\/$/, '');
 
   return (
-    <aside id='site-sidebar' class='site-sidebar' data-open={props.open}>
+    <aside id='site-sidebar' class='site-sidebar' data-open={props.open ? 'true' : 'false'}>
       <nav aria-label='Documentation'>
       <For each={sections}>
         {section => (

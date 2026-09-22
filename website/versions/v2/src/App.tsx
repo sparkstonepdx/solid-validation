@@ -22,7 +22,7 @@ export default function App() {
             <button
               type='button'
               id='sidebar-toggle'
-              aria-expanded={sidebarOpen()}
+              aria-expanded={sidebarOpen() ? 'true' : 'false'}
               aria-controls='site-sidebar'
               onClick={() => setSidebarOpen(open => !open)}>
               Menu
