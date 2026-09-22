@@ -280,3 +280,72 @@ section,
   background: none;
   padding: 0;
 }
+
+/* ---------- narrow screens ---------- */
+
+/*
+ * The header is the tightest row on the site: a menu button, the name, the
+ * version switcher and two links. Below 560px the two links go, since the
+ * footer carries them, leaving the controls that navigate.
+ */
+@media (max-width: 560px) {
+  .site-header .site-links a {
+    display: none;
+  }
+}
+
+.site-header {
+  gap: 0.75rem;
+}
+
+.site-header .semantic {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+// Touch targets. 0.25rem of padding is a ~24px row, below the ~44px a finger
+// expects, and the sidebar is the one list people tap repeatedly.
+@media (max-width: 900px) {
+  .site-sidebar {
+    padding-bottom: 1.5rem;
+  }
+
+  .site-sidebar a {
+    padding: 0.5rem;
+  }
+
+  .sidebar-group {
+    margin-top: 1rem;
+  }
+}
+
+/*
+ * Demos hold real form controls, which are the parts most likely to push the
+ * page sideways. The segmented control is inline-flex and does not wrap, so it
+ * scrolls rather than overflowing; wrapping it would break its sliding
+ * indicator.
+ */
+.demo-surface :is(input, select, textarea) {
+  max-width: 100%;
+}
+
+.demo-surface .segmented {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 560px) {
+  .demo-surface :is(input, textarea) {
+    width: 100%;
+  }
+}
+
+// Long identifiers in prose, and package names in headings, break rather than
+// widening the page.
+.site-main :is(p, li, td, th) code {
+  overflow-wrap: anywhere;
+}
+
+.site-main :is(h1, h2, h3) {
+  overflow-wrap: anywhere;
+}

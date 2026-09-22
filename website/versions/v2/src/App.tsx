@@ -37,7 +37,7 @@ export default function App() {
             </nav>
           </header>
           <div class='site-body'>
-            <Sidebar open={sidebarOpen()} />
+            <Sidebar open={sidebarOpen()} onNavigate={() => setSidebarOpen(false)} />
             <main class='site-main'>
               <Errored
                 fallback={(error, reset) => (

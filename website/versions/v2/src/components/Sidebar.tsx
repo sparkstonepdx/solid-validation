@@ -30,7 +30,7 @@ const sections = [
   { title: 'Help', links: [{ href: '/v2/troubleshooting', label: 'Troubleshooting' }] },
 ];
 
-export default function Sidebar(props: { open: boolean }) {
+export default function Sidebar(props: { open: boolean; onNavigate: () => void }) {
   // Pages serves under the repo name, so every href carries the base. The
   // crawler follows them, which is why its output nests under that prefix.
   const base = import.meta.env.BASE_URL;
@@ -50,7 +50,10 @@ export default function Sidebar(props: { open: boolean }) {
               <For each={section.links}>
                 {link => (
                   <li>
-                    <a href={to(link.href)} aria-current={isCurrent(link.href) ? 'page' : undefined}>
+                    <a
+                      href={to(link.href)}
+                      aria-current={isCurrent(link.href) ? 'page' : undefined}
+                      onClick={props.onNavigate}>
                       {link.label}
                     </a>
                   </li>
