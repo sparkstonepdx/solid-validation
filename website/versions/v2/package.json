@@ -13,7 +13,7 @@
     "@solidjs/meta": "1.0.0-next.2",
     "@solidjs/router": "2.0.0-next.26",
     "@solidjs/web": "2.0.0-rc.9",
-    "@sparkstone/css": "https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@43cdfe5",
+    "@sparkstone/css": "https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@582936e",
     "@sparkstone/solid-validation": "workspace:^",
     "markdown-it": "^15.0.2",
     "shiki": "^4.4.3",

@@ -30,6 +30,12 @@ covers each change below with before and after code.
   Rendering is unaffected; imperative reads and tests should wait.
 - Peer dependencies are now `solid-js` and `@solidjs/web`, both `^2.0.0-rc.9`.
 
+### Added
+- **Conditional validators.** The accessor passed to `validate` is read every
+  time the field is checked, so a rule can depend on reactive state:
+  `ref={validate(() => [needsMatch() && mustMatch])}`. In 1.x the array was
+  fixed at mount.
+
 ### Removed
 - **`validateRef`.** It existed because a directive could not be passed as a
   prop. `validate` returns an ordinary ref callback, so it covers that case:

@@ -198,11 +198,10 @@ Returns a ref callback that registers an element for validation, on form inputs 
 <input ref={validate()} name='username' required />
 ```
 
-The array is read once, when the field registers, so a condition inside it is evaluated at mount. For a rule that should switch on and off while the form is open, put the condition inside the validator, where it is read on every check:
+The array is read every time the field is checked, so a rule can depend on reactive state and follow it:
 
 ```tsx
-const mustMatch: Validator<HTMLInputElement> = el =>
-  needsMatch() && el.value !== getFieldValue('password') && 'Passwords do not match';
+<input ref={validate(() => [isRequired, needsMatch() && mustMatch])} />
 ```
 
 ##### `formSubmit`

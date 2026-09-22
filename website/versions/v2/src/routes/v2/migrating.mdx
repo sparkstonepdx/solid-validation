@@ -37,20 +37,15 @@ directive compiler used to insert that wrapper for you.
 +ref={validate(() => [minLength(3), noSpaces])}
 ```
 
-The directive compiler used to insert that wrapper for you. The array is read
-once, when the field registers, so a condition inside it is evaluated at mount:
+The directive compiler used to insert that wrapper for you. It is read every
+time the field is checked, so a rule can depend on reactive state and follow it:
 
 ```tsx
 <input ref={validate(() => [isRequired, needsMatch() && mustMatch])} />
 ```
 
-To change a field's rules later, put the condition inside the validator, where
-it is read every time the field is checked:
-
-```ts
-const mustMatchWhenNeeded: Validator<HTMLInputElement> = el =>
-  needsMatch() && el.value !== getFieldValue('password') && 'Passwords do not match';
-```
+In v1 the array was fixed when the field mounted, so a condition inside it was
+evaluated once and never again. That is new behaviour, not just new syntax.
 
 `formSubmit` takes the callback directly. Your callback closes over its own
 signals and reads them when it runs, so there is nothing to defer.

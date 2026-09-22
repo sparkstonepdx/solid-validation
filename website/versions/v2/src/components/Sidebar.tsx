@@ -30,7 +30,7 @@ const sections = [
   { title: 'Help', links: [{ href: '/v2/troubleshooting', label: 'Troubleshooting' }] },
 ];
 
-export default function Sidebar() {
+export default function Sidebar(props: { open: boolean }) {
   // Pages serves under the repo name, so every href carries the base. The
   // crawler follows them, which is why its output nests under that prefix.
   const base = import.meta.env.BASE_URL;
@@ -40,11 +40,12 @@ export default function Sidebar() {
     location.pathname.replace(/\/$/, '') === to(href).replace(/\/$/, '');
 
   return (
-    <nav class='docs-nav' aria-label='Documentation'>
+    <aside id='site-sidebar' class='site-sidebar' data-open={props.open}>
+      <nav aria-label='Documentation'>
       <For each={sections}>
         {section => (
           <>
-            <h2>{section.title}</h2>
+            <p class='sidebar-group'>{section.title}</p>
             <ul>
               <For each={section.links}>
                 {link => (
@@ -59,6 +60,7 @@ export default function Sidebar() {
           </>
         )}
       </For>
-    </nav>
+      </nav>
+    </aside>
   );
 }

@@ -16,6 +16,21 @@ Solid 2 batches store writes, so an error lands on the next flush rather than in
 
 It matters only when reading the store imperatively straight after an event, and in tests. Assert with `waitFor` rather than immediately after the action.
 
+## submit() validates a value you just changed
+
+Solid 2 batches signal writes as well as store writes. If a handler sets state
+and calls `submit()` or `validateField()` in the same tick, validation can see
+the previous value. Call `flush()` from `solid-js` in between:
+
+```ts
+setPlan(choice);
+flush();
+await submit(checkout);
+```
+
+Blur never needs this: it is its own browser event, so earlier writes have
+already settled by the time it fires.
+
 ## Errors land under the wrong key
 
 The store key is the element's `name`, falling back to `data-name`. An `<input>` with neither is registered under an empty string rather than falling through to `data-name`, because `input.name` is `''` and not `undefined`. Give inputs a `name`, and give non-input elements a `data-name`.

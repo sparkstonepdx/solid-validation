@@ -1,6 +1,7 @@
 import { Title } from '@solidjs/meta';
 import SubmitDemo from '../../components/demos/SubmitDemo';
 import ImperativeSubmitDemo from '../../components/demos/ImperativeSubmitDemo';
+import DemoCard from '../../components/DemoCard';
 
 <Title>Quick start - solid-validation</Title>
 
@@ -56,7 +57,9 @@ export default function SignupForm() {
 
 That is the whole API for a normal form. Here it is running:
 
-<SubmitDemo />
+<DemoCard>
+  <SubmitDemo />
+</DemoCard>
 
 ## What each piece does
 
@@ -101,4 +104,6 @@ Server errors, async checks, and fields outside a form are all in the guides. If
 
 Calling `submit()` yourself, without a form element:
 
-<ImperativeSubmitDemo />
+<DemoCard>
+  <ImperativeSubmitDemo />
+</DemoCard>
