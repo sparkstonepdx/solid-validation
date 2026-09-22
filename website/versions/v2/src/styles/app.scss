@@ -40,6 +40,49 @@
   display: none;
 }
 
+/*
+ * Header controls read as one row. The nav links drop the link colour and
+ * underline, and the version switcher matches them.
+ *
+ * The switcher needs its own class: the kobalte layer styles
+ * button[aria-haspopup=listbox] as a form field, like a native select, and
+ * that selector outranks .btn-ghost, so a ghost class on the trigger is
+ * ignored. The same class on the pre-hydration placeholder keeps the two
+ * identical, so the header does not shift when it hydrates.
+ */
+.site-header .site-links a {
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+
+.site-header .site-links a:hover {
+  color: var(--fg);
+}
+
+.site-header .version-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--border-radius);
+  background-color: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+.site-header .version-trigger:hover,
+.site-header .version-trigger[data-expanded] {
+  background-color: var(--surface);
+  color: var(--fg);
+}
+
+.site-header .version-chevron {
+  font-size: 0.75em;
+}
+
 .site-body {
   display: flex;
   align-items: flex-start;
