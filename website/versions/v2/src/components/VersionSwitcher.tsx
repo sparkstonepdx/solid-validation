@@ -35,16 +35,10 @@ export default function VersionSwitcher() {
   );
 
   return (
-    <Show
-      when={mounted()}
-      fallback={
-        <span class='version-trigger'>
-          {current().label}
-          <span class='version-chevron' aria-hidden='true'>▾</span>
-        </span>
-      }>
+    <Show when={mounted()} fallback={<span class='version-trigger'>{current().label}</span>}>
       <Select<Version>
         options={all()}
+        gutter={0}
         optionValue='id'
         optionTextValue='label'
         value={current()}
@@ -57,9 +51,8 @@ export default function VersionSwitcher() {
             <Select.ItemLabel>{props.item.rawValue.label}</Select.ItemLabel>
           </Select.Item>
         )}>
-        <Select.Trigger class='version-trigger' aria-label='Documentation version'>
+        <Select.Trigger style='margin-bottom: 0' aria-label='Documentation version'>
           <Select.Value<Version>>{state => state.selectedOption().label}</Select.Value>
-          <Select.Icon class='version-chevron'>▾</Select.Icon>
         </Select.Trigger>
         <Select.Portal>
           <Select.Content class='dropdown-content'>

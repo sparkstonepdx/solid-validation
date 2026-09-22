@@ -16,6 +16,8 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  max-width: 1450px;
+  margin: 0 auto;
   padding: 0.75rem var(--padding);
   background-color: var(--bg);
   border-bottom: var(--border-width) solid var(--divider);
@@ -29,11 +31,6 @@
   margin-left: auto;
   align-items: center;
   gap: 1rem;
-}
-
-.site-header button {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
 }
 
 #sidebar-toggle {

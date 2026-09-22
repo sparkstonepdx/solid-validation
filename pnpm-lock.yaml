@@ -269,8 +269,8 @@ importers:
         specifier: 2.0.0-rc.9
         version: 2.0.0-rc.9(solid-js@2.0.0-rc.9)
       '@sparkstone/css':
-        specifier: https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@43cdfe5
-        version: https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@43cdfe5
+        specifier: https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@7c391f8
+        version: https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@7c391f8
       '@sparkstone/solid-validation':
         specifier: workspace:^
         version: link:../../..
@@ -2055,9 +2055,9 @@ packages:
   '@sparkstone/css@2.0.0':
     resolution: {integrity: sha512-PdzK83KTAtlHRdJjWWMzi8fg0E40I7Bkdd7DX9IqgCrbjnknVWe3YAfvYZlbF/b/RfaC9I6LHOdPuRfPMbRvIg==}
 
-  '@sparkstone/css@https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@43cdfe5':
-    resolution: {integrity: sha512-G8eZzWkf3PwSWXeMISHDiChvdkfrY5hOlrWzaLAEpBZtsw849JTsIGCjj5ja+8hEez0H27HgelnrirSqiemrdg==, tarball: https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@43cdfe5}
-    version: 2.0.0
+  '@sparkstone/css@https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@7c391f8':
+    resolution: {integrity: sha512-JjTC5r+0whPApdg4NaR02OzCwjSZb/avyA1xXiHHmnfVz5z2GffVxndHFn7we+cSlkAjA1bii0tnfs9eEAZqFg==, tarball: https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@7c391f8}
+    version: 3.0.0-alpha.0
 
   '@sparkstone/solid-validation@1.6.1':
     resolution: {integrity: sha512-5LJJjFYFC1GN9U6fk0L7IK3oLMNA/wNjaL5KI8DeeKQDRdWvpShTRsjWFKaQMOor7DLhIaJhosaKLqG+u8+iWQ==}
@@ -5867,7 +5867,7 @@ snapshots:
 
   '@sparkstone/css@2.0.0': {}
 
-  '@sparkstone/css@https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@43cdfe5': {}
+  '@sparkstone/css@https://pkg.pr.new/sparkstonepdx/css/@sparkstone/css@7c391f8': {}
 
   '@sparkstone/solid-validation@1.6.1(solid-js@1.9.15)':
     dependencies:
