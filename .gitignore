@@ -8,3 +8,6 @@ coverage
 
 # Staging directory for surge.sh docs previews, built in CI.
 surge
+
+# Built site. Deployed by the Pages workflow from a fresh build, never committed.
+docs
